@@ -88,8 +88,8 @@ run another copy of this stack at the same time.
 ## Clone and retrieve images
 
 ```bash
-git clone git@github.com:yzzzzzzh/fishbot_multirobot_sim_dual_v128.git
-cd fishbot_multirobot_sim_dual_v128
+git clone git@github.com:yzzzzzzh/multirobot_explore_shared.git
+cd multirobot_explore_shared
 ```
 
 For a private package, authenticate to GHCR with a token having
