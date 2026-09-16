@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the validated dual-Go2 RACER + Swarm-LIO2 v128 configuration.
+# Run the dual-Go2 RACER + Swarm-LIO2 configuration.
 # Usage: scripts/run_legged_dual_exploration.sh [duration_sim_s] [run_name]
 set -euo pipefail
 
@@ -15,7 +15,7 @@ fi
 
 DURATION="${1:-700}"
 RUN_NAME="${2:-run_$(date +%Y%m%d_%H%M%S)}"
-COMPOSE=(docker compose -f compose.run1-v128.yml)
+COMPOSE=(docker compose -f docker-compose.yml)
 CONTAINER_RUN_DIR="/tmp/${RUN_NAME}"
 OUTPUT_DIR="$REPO/runs/$RUN_NAME"
 containers_started=false
@@ -61,7 +61,7 @@ for name in fishbot_gazebo swarm_lio2_ros2 racer_ros1 racer_controller; do
   fi
 done
 
-swarm_image="${SWARM_LIO_IMAGE:-swarm-lio2-ros2:run1-v128-validated}"
+swarm_image="${SWARM_LIO_IMAGE:-multirobot_explore_shared-swarm-lio2:local}"
 docker run --rm --ipc=host --entrypoint bash "$swarm_image" -lc \
   "find /dev/shm -maxdepth 1 -type f \( -name 'fastrtps_*' -o -name 'sem.fastrtps_*' \) -delete"
 

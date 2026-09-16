@@ -1,9 +1,9 @@
-name: fishbot_dual_go2_v128
+name: multirobot_explore_shared
 
 services:
   gazebo:
     container_name: fishbot_gazebo
-    image: ${LEGGED_IMAGE:-fishbot_multirobot_sim-legged:run1-v128-historical}
+    image: ${LEGGED_IMAGE:-multirobot_explore_shared-legged:local}
     ipc: host
     tty: true
     privileged: true
@@ -40,7 +40,7 @@ services:
 
   swarm_lio2:
     container_name: swarm_lio2_ros2
-    image: ${SWARM_LIO_IMAGE:-swarm-lio2-ros2:run1-v128-validated}
+    image: ${SWARM_LIO_IMAGE:-multirobot_explore_shared-swarm-lio2:local}
     working_dir: /opt/swarm_lio_ws
     network_mode: host
     ipc: host
@@ -95,7 +95,7 @@ services:
 
   racer_ros1:
     container_name: racer_ros1
-    image: ${RACER_IMAGE:-fishbot_multirobot_sim-racer_ros1:v128-dual-first-grid-bonus}
+    image: ${RACER_IMAGE:-multirobot_explore_shared-racer-ros1:local}
     network_mode: host
     environment:
       ROS_MASTER_URI: http://127.0.0.1:11311
@@ -150,7 +150,7 @@ services:
 
   racer_controller:
     container_name: racer_controller
-    image: ${SWARM_LIO_IMAGE:-swarm-lio2-ros2:run1-v128-validated}
+    image: ${SWARM_LIO_IMAGE:-multirobot_explore_shared-swarm-lio2:local}
     network_mode: host
     ipc: host
     tty: true

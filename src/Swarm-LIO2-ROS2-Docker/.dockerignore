@@ -1,0 +1,12 @@
+.git
+build
+install
+log
+Logs
+bags/*
+!bags/.gitkeep
+**/__pycache__
+**/.pytest_cache
+*.bag
+*.db3
+*.pcd

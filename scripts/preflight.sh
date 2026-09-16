@@ -18,6 +18,11 @@ for command_name in docker python3 ffmpeg ffprobe sha256sum; do
   }
 done
 
+python3 -c 'import matplotlib, numpy' >/dev/null || {
+  echo "Python packages numpy and matplotlib are required" >&2
+  exit 10
+}
+
 docker info >/dev/null
 docker compose version >/dev/null
 nvidia-smi >/dev/null
@@ -28,12 +33,12 @@ if ! docker info --format '{{json .Runtimes}}' | grep -q 'nvidia'; then
 fi
 
 for image in \
-  "${LEGGED_IMAGE:-fishbot_multirobot_sim-legged:run1-v128-historical}" \
-  "${RACER_IMAGE:-fishbot_multirobot_sim-racer_ros1:v128-dual-first-grid-bonus}" \
-  "${SWARM_LIO_IMAGE:-swarm-lio2-ros2:run1-v128-validated}"; do
+  "${LEGGED_IMAGE:-multirobot_explore_shared-legged:local}" \
+  "${RACER_IMAGE:-multirobot_explore_shared-racer-ros1:local}" \
+  "${SWARM_LIO_IMAGE:-multirobot_explore_shared-swarm-lio2:local}"; do
   docker image inspect "$image" >/dev/null || {
     echo "required image is unavailable: $image" >&2
-    echo "pull it from GHCR or restore the validated local image" >&2
+    echo "run ./build_docker_environment.sh first" >&2
     exit 12
   }
 done
@@ -50,7 +55,7 @@ for file in \
   }
 done
 
-docker compose -f compose.run1-v128.yml config --quiet
+docker compose -f docker-compose.yml config --quiet
 
 available_kb="$(df -Pk "$REPO" | awk 'NR==2 {print $4}')"
 if [ "$available_kb" -lt 1048576 ]; then

@@ -1,7 +1,7 @@
 # ==============================
 #  Stage 1 — Dependencies
 # ==============================
-FROM ros:humble-ros-base AS dependencies
+FROM ros:humble-ros-base@sha256:1813d3c85d7f96ff7d3012d865204583255740182db5d0065f8f8cd029a83138 AS dependencies
 
 # Set up environment
 ENV DEBIAN_FRONTEND=noninteractive

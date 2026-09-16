@@ -18,24 +18,17 @@ ROS 2 safety/controller ── ground_omni cmd_vel ── two Go2 robots
 Swarm-LIO2 continues to estimate full SE(3) poses. The adapter presents a
 planar slice to RACER because this experiment is ground exploration.
 
-## Important version boundary
+## Build and reproducibility boundary
 
-The validated execution path uses three pinned container images described in
-`config/provenance.json`:
+This repository builds its complete Docker environment locally and does not
+require any prebuilt private image. The historical runtime identities remain
+recorded in `config/provenance.json` for audit purposes.
 
-- historical Go2/Gazebo image with working retro-reflector LiDAR returns;
-- historical RACER ROS 1 image with per-vehicle first-grid hysteresis;
-- a Swarm-LIO2 ROS 2 runtime validated in the 2026-09-16 rerun.
-
-Do not replace these with `latest`. A later locally rebuilt Go2 image produced
-zero-intensity reflector returns and could not initialize the two-robot common
-frame. The repository includes source-build Dockerfiles for inspection and
-future development, but an image rebuilt later is not claimed to be
-bit-identical to the validated image.
-
-The original 2026-09-05 result did not preserve an independently identifiable
-Swarm-LIO2 image digest. This limitation is recorded explicitly rather than
-claiming full bit-for-bit reconstruction.
+The source-built environment is not claimed to be byte-identical to the
+historical images because upstream apt repositories can change, and the
+original Swarm-LIO2 image digest was not preserved. See
+`DOCKER_ENVIRONMENT.md` for the complete build graph, dependencies, runtime
+topology and tested host.
 
 ## Requirements
 
@@ -44,52 +37,45 @@ claiming full bit-for-bit reconstruction.
 - Docker Engine and Docker Compose v2
 - NVIDIA Container Toolkit with the Docker `nvidia` runtime
 - Python 3, NumPy, Matplotlib and FFmpeg on the host for analysis/rendering
-- access to this repository and its private GHCR packages
-- at least 30 GB free for container images and build/runtime data is recommended
+- internet access for the first Docker build
+- at least 25 GB free in Docker storage
 
 The four runtime containers use fixed host networking and fixed names. Do not
 run another copy of this stack at the same time.
 
-## Clone and retrieve images
+## Clone and build
 
 ```bash
 git clone git@github.com:yzzzzzzh/multirobot_explore_shared.git
 cd multirobot_explore_shared
+./build_docker_environment.sh
 ```
 
-For a private package, authenticate to GHCR with a token having
-`read:packages`:
-
-```bash
-printf '%s' "$CR_PAT" | docker login ghcr.io -u yzzzzzzh --password-stdin
-```
-
-After the images are published, copy the example environment and use the
-immutable GHCR references recorded there:
-
-```bash
-cp .env.example .env
-docker compose -f compose.run1-v128.yml pull
-bash scripts/preflight.sh
-```
-
-Never commit `.env`, tokens or Docker credentials.
+The command builds all five local images in dependency order and runs the
+preflight checks. It does not download project-specific images from a registry.
+Optional proxy usage and all image details are documented in
+`DOCKER_ENVIRONMENT.md`.
 
 ## Run
 
 First perform a shorter 200-simulation-second acceptance run:
 
 ```bash
-bash scripts/run_legged_dual_exploration.sh 200 smoke_200s
+./run_one_click.sh 200 smoke_200s
 ```
 
 Then run the complete experiment:
 
 ```bash
-bash scripts/run_legged_dual_exploration.sh 700 run_700s
+./run_one_click.sh 700 run_700s
 ```
 
-The script performs the validated startup sequence:
+`run_one_click.sh` performs the source build, starts the experiment, records the
+requested simulation duration, computes the metrics and renders both videos.
+Docker reuses its build cache on later runs. If the images are already built,
+`bash scripts/run_legged_dual_exploration.sh ...` skips the build step.
+
+The script performs the configured startup sequence:
 
 1. start both Go2 robots in fixed stand;
 2. wait for both Swarm-LIO2 odometry topics;
@@ -142,42 +128,19 @@ the focused release regression tests. The original monolithic
 from release verification because it also asserts removed wheeled/UAV files and
 controller behavior added after the archived snapshot.
 
-## Source-build images
+## Proxy build
 
-The exact result should use the published validated images. For development,
-the included Dockerfiles can be built with:
-
-```bash
-bash scripts/build_images.sh
-```
-
-Proxy variables are optional and inherited when present:
+The build accepts the same explicit proxy variables as the single-robot shared
+repository:
 
 ```bash
-HTTP_PROXY=http://proxy-host:7890 \
-HTTPS_PROXY=http://proxy-host:7890 \
-NO_PROXY=localhost,127.0.0.1 \
-bash scripts/build_images.sh
+FISHBOT_HTTP_PROXY=http://proxy-host:7890 \
+FISHBOT_HTTPS_PROXY=http://proxy-host:7890 \
+./build_docker_environment.sh
 ```
 
-Do not use `127.0.0.1` for a host proxy unless the build uses host networking
-or the proxy is genuinely reachable from the builder. `build_images.sh` uses
-host networking on Linux so a host-bound proxy can be reached during every
-build stage.
-
-## Publishing the validated images
-
-The repository owner performs this once:
-
-```bash
-bash scripts/tag_images_for_ghcr.sh yzzzzzzh
-printf '%s' "$CR_PAT" | docker login ghcr.io -u yzzzzzzh --password-stdin
-bash scripts/push_images_to_ghcr.sh yzzzzzzh
-```
-
-After pushing, replace tag-only entries in `.env.example` with immutable
-`ghcr.io/...@sha256:...` references and link each package to this repository so
-private collaborators inherit access.
+Every Docker build uses host networking, so a proxy listening on
+`127.0.0.1` is reachable during the build.
 
 Prepare the archived 700-s result for the GitHub Release without adding large
 artifacts to Git history:

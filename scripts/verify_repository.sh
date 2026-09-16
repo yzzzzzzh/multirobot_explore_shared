@@ -4,7 +4,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO"
 
-for script in scripts/*.sh; do
+for script in build_docker_environment.sh run_one_click.sh scripts/*.sh; do
   bash -n "$script"
 done
 
@@ -13,7 +13,7 @@ python3 -m json.tool results/reference/run1_700s_v128/run.summary.json >/dev/nul
 python3 -m json.tool results/reference/run1_700s_v128/run.analysis.json >/dev/null
 python3 -m json.tool results/reference/run1_700s_v128/planar_metrics >/dev/null
 
-docker compose -f compose.run1-v128.yml config --quiet
+docker compose -f docker-compose.yml config --quiet
 
 if rg -n -F "$HOME/" \
   --glob '!config/provenance.json' --glob '!results/**' .; then

@@ -2,7 +2,11 @@
 
 ## Active execution path
 
-- `compose.run1-v128.yml`: the only supported runtime Compose file.
+- `docker-compose.yml`: the supported four-service runtime Compose file.
+- `build_docker_environment.sh`: one-command local Docker build and preflight.
+- `run_one_click.sh`: one-command build, experiment, analysis and rendering.
+- `DOCKER_ENVIRONMENT.md`: base images, dependencies, build graph and runtime
+  requirements.
 - `scripts/run_legged_dual_exploration.sh`: startup and experiment orchestration.
 - `scripts/preflight.sh`: host, image, model and configuration checks.
 - `scripts/monitor_dual_run.sh`: periodic progress snapshots.
@@ -10,7 +14,7 @@
 - `scripts/finish_dual_run.sh`: rendering and output integrity checks.
 - `scripts/prepare_release_assets.sh`: packages the archived 700-s videos,
   result data and logs for a GitHub Release without adding them to Git history.
-- `src/RACER`: modified v128 working tree extracted from the RACER image.
+- `src/RACER`: historical modified working tree extracted from the RACER image.
 - `src/Swarm-LIO2-ROS2-Docker`: ROS 2 LIO source used by the validated rerun.
 - `src/racer_adapter`: ROS 2 planar adapter.
 - `src/racer_integration`: ROS1/ROS2 gateway, controller, recorder and analysis.
@@ -23,13 +27,13 @@
 The files under `config/docker-compose*.yml` are the five original layered
 Compose files from which the successful run was launched. They are retained for
 auditability but are not the public entrypoint. Their relevant values were
-collapsed into `compose.run1-v128.yml`.
+collapsed into `docker-compose.yml`.
 
 ## Included result evidence
 
-`results/reference/run1_700s_v128` contains small text/JSON metrics and hashes.
+`results/reference/` contains small text/JSON metrics and hashes.
 The complete `run.npz`, videos and logs are not Git objects; they belong in the
-GitHub Release named `run1-700s-v128`.
+GitHub Release named `run1-700s`.
 
 ## Deliberately excluded
 

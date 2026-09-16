@@ -6,14 +6,27 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 class ReleaseConfigurationTest(unittest.TestCase):
-    def test_compose_pins_dual_go2_v128_behavior(self):
-        compose = (ROOT / "compose.run1-v128.yml").read_text(encoding="utf-8")
+    def test_compose_pins_dual_go2_behavior(self):
+        compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
         self.assertIn("RACER_BOTS: \"1,2\"", compose)
         self.assertIn("platform_mode:=ground_omni", compose)
         self.assertIn("RACER_CONSISTENCY_SIGN: \"1.0\"", compose)
         self.assertIn("RACER_FIRST_GRID_BONUS: \"6.0\"", compose)
         self.assertIn("bootstrap_directions_deg:='[90.0]'", compose)
         self.assertNotIn(":latest", compose)
+
+    def test_source_build_tags_match_compose_defaults(self):
+        compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+        build = (ROOT / "scripts/build_images.sh").read_text(encoding="utf-8")
+        expected = (
+            "multirobot_explore_shared-legged:local",
+            "multirobot_explore_shared-racer-ros1:local",
+            "multirobot_explore_shared-swarm-lio2:local",
+        )
+        for image in expected:
+            self.assertIn(image, compose)
+            self.assertIn(image, build)
+        self.assertNotIn("ghcr.io", compose.lower())
 
     def test_go2_has_the_validated_retro_reflector(self):
         xacro = (
@@ -34,7 +47,7 @@ class ReleaseConfigurationTest(unittest.TestCase):
         self.assertIn("trap cleanup_on_exit EXIT INT TERM", launcher)
         self.assertIn("grep -c 'ikd-tree size'", launcher)
 
-    def test_v128_hgrid_has_per_vehicle_first_grid_bonus(self):
+    def test_hgrid_has_per_vehicle_first_grid_bonus(self):
         hgrid = (
             ROOT
             / "src/RACER/swarm_exploration/active_perception/src/hgrid.cpp"

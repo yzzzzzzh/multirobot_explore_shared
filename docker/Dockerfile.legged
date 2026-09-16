@@ -35,7 +35,7 @@ RUN cd /opt && wget -q --tries=5 --timeout=30 --continue \
         -O libtorch.zip \
     && unzip -q libtorch.zip && rm libtorch.zip
 ENV Torch_DIR=/opt/libtorch
-ENV LD_LIBRARY_PATH=/opt/libtorch/lib:${LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH=/opt/libtorch/lib
 WORKDIR /legged_ws
 COPY src/legged/ src/
 RUN source /opt/ros/humble/setup.bash \
