@@ -18,6 +18,17 @@ RUN_NAME="${2:-run_$(date +%Y%m%d_%H%M%S)}"
 COMPOSE=(docker compose -f compose.run1-v128.yml)
 CONTAINER_RUN_DIR="/tmp/${RUN_NAME}"
 OUTPUT_DIR="$REPO/runs/$RUN_NAME"
+containers_started=false
+
+cleanup_on_exit() {
+  status=$?
+  if [ "$status" -ne 0 ] && [ "$containers_started" = true ]; then
+    "${COMPOSE[@]}" stop --timeout 30 \
+      racer_controller racer_ros1 swarm_lio2 gazebo >/dev/null 2>&1 || true
+  fi
+  return "$status"
+}
+trap cleanup_on_exit EXIT
 
 if ! [[ "$DURATION" =~ ^[0-9]+([.][0-9]+)?$ ]] || [ "$DURATION" = "0" ]; then
   echo "duration_sim_s must be a positive number" >&2
@@ -54,6 +65,7 @@ docker run --rm --ipc=host --entrypoint bash "$swarm_image" -lc \
   "find /dev/shm -maxdepth 1 -type f \( -name 'fastrtps_*' -o -name 'sem.fastrtps_*' \) -delete"
 
 "${COMPOSE[@]}" up -d --force-recreate gazebo swarm_lio2 racer_ros1 racer_controller
+containers_started=true
 
 echo "waiting for Swarm-LIO2 map initialization"
 deadline=$((SECONDS + 600))
@@ -89,7 +101,7 @@ for bot in 1 2; do
   for _ in $(seq 1 6); do
     if docker exec fishbot_gazebo bash -lc \
       "source /opt/ros/humble/setup.bash; timeout 20 ros2 param set /bot${bot}/twist_to_control_input auto_trot true" \
-      | grep -q 'Successful'; then
+      | grep -qi 'successful'; then
       released=true
       break
     fi

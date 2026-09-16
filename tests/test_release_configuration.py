@@ -30,6 +30,8 @@ class ReleaseConfigurationTest(unittest.TestCase):
         self.assertIn("--wait-for-tracking", launcher)
         self.assertIn("--startup-timeout 1800", launcher)
         self.assertIn("auto_trot true", launcher)
+        self.assertIn("grep -qi 'successful'", launcher)
+        self.assertIn("trap cleanup_on_exit EXIT", launcher)
 
     def test_v128_hgrid_has_per_vehicle_first_grid_bonus(self):
         hgrid = (
