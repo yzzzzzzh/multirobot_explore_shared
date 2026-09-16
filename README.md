@@ -1,36 +1,5 @@
 # Dual Go2 RACER + Swarm-LIO2
 
-This repository is a focused, private reproduction package for the archived
-two-Go2 atrium exploration result.
-
-It contains only the source, Docker definitions, runtime configuration,
-recording, analysis and rendering code needed for the two-robot teaching
-building experiment. It intentionally excludes unrelated FishBot experiments.
-
-## Reference result
-
-The archived run requested 700 simulation seconds and recorded 699.8975
-simulation seconds. The planar evaluator reported:
-
-| Metric | Reference value |
-|---|---:|
-| Navigable area | 4406.5 m² |
-| Final observed area | 4406.5 m² |
-| Final planar coverage | 100% |
-| Time to 80% | 365.4975 s |
-| Time to 90% | 400.1975 s |
-| Time to 95% | 415.4975 s |
-| Total planar distance | 893.7524 m |
-| Inter-robot collision samples | 0 |
-| Emergency stop | false |
-
-Machine-readable reference metrics are under `results/reference/`. The full
-NPZ, videos and logs are intended to be distributed as a GitHub Release rather
-than normal Git objects.
-
-A clean-clone 200-s acceptance run was completed on 2026-09-16. Its measured
-results and validation boundary are recorded in `VALIDATION.md`.
-
 ## Runtime architecture
 
 ```text
