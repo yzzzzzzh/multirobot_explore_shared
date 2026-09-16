@@ -1,0 +1,1293 @@
+<sdf version='1.7'>
+  <world name='default'>
+    <light name='sun' type='directional'>
+      <pose>0 0 60 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.3 0.2 -0.9</direction>
+    </light>
+    <gravity>0 0 -9.8</gravity>
+    <physics type='ode'>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+    <plugin filename='ignition-gazebo-physics-system' name='gz::sim::systems::Physics'/>
+    <plugin filename='ignition-gazebo-sensors-system' name='gz::sim::systems::Sensors'>
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin filename='ignition-gazebo-imu-system' name='gz::sim::systems::Imu'/>
+    <plugin filename='ignition-gazebo-forcetorque-system' name='gz::sim::systems::ForceTorque'/>
+    <plugin filename='ignition-gazebo-user-commands-system' name='gz::sim::systems::UserCommands'/>
+    <plugin filename='ignition-gazebo-scene-broadcaster-system' name='gz::sim::systems::SceneBroadcaster'/>
+    <scene>
+      <ambient>0.55 0.55 0.55 1</ambient>
+      <background>0.78 0.82 0.88 1</background>
+      <shadows>true</shadows>
+    </scene>
+    <model name='teaching_building_atrium'>
+      <static>true</static>
+      <link name='floor'>
+        <pose>0.000 0.000 -0.050 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>100.000 50.000 0.100</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>100.000 50.000 0.100</size></box></geometry>
+          <material>
+            <ambient>0.320 0.360 0.400 1.000</ambient>
+            <diffuse>0.320 0.360 0.400 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='outer_north'>
+        <pose>0.000 24.875 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>100.000 0.250 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>100.000 0.250 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='outer_south'>
+        <pose>0.000 -24.875 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>100.000 0.250 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>100.000 0.250 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='outer_east'>
+        <pose>49.875 0.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 50.000 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 50.000 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='outer_west'>
+        <pose>-49.875 0.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 50.000 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 50.000 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_north_left'>
+        <pose>-11.000 10.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>18.000 0.250 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>18.000 0.250 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_north_right'>
+        <pose>11.000 10.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>18.000 0.250 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>18.000 0.250 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_south_left'>
+        <pose>-11.000 -10.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>18.000 0.250 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>18.000 0.250 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_south_right'>
+        <pose>11.000 -10.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>18.000 0.250 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>18.000 0.250 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_west_lower'>
+        <pose>-20.000 -6.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 8.000 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 8.000 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_west_upper'>
+        <pose>-20.000 6.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 8.000 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 8.000 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_east_lower'>
+        <pose>20.000 -6.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 8.000 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 8.000 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_east_upper'>
+        <pose>20.000 6.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 8.000 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 8.000 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='north_wing_0'>
+        <pose>-40.000 17.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='south_wing_0'>
+        <pose>-40.000 -17.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='north_wing_1'>
+        <pose>-30.000 17.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='south_wing_1'>
+        <pose>-30.000 -17.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='north_wing_2'>
+        <pose>30.000 17.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='south_wing_2'>
+        <pose>30.000 -17.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='north_wing_3'>
+        <pose>40.000 17.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='south_wing_3'>
+        <pose>40.000 -17.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.250 14.750 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='west_mid_lower'>
+        <pose>-35.000 -6.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>30.000 0.250 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>30.000 0.250 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='west_mid_upper'>
+        <pose>-35.000 6.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>30.000 0.250 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>30.000 0.250 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='east_mid_lower'>
+        <pose>35.000 -6.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>30.000 0.250 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>30.000 0.250 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='east_mid_upper'>
+        <pose>35.000 6.000 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>30.000 0.250 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>30.000 0.250 3.000</size></box></geometry>
+          <material>
+            <ambient>0.620 0.680 0.760 1.000</ambient>
+            <diffuse>0.620 0.680 0.760 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='loop_pillar_0'>
+        <pose>-30.000 -2.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.550 0.550 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.550 0.550 3.000</size></box></geometry>
+          <material>
+            <ambient>0.860 0.480 0.200 1.000</ambient>
+            <diffuse>0.860 0.480 0.200 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='loop_pillar_1'>
+        <pose>-30.000 2.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.550 0.550 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.550 0.550 3.000</size></box></geometry>
+          <material>
+            <ambient>0.860 0.480 0.200 1.000</ambient>
+            <diffuse>0.860 0.480 0.200 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='loop_pillar_2'>
+        <pose>30.000 -2.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.550 0.550 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.550 0.550 3.000</size></box></geometry>
+          <material>
+            <ambient>0.860 0.480 0.200 1.000</ambient>
+            <diffuse>0.860 0.480 0.200 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='loop_pillar_3'>
+        <pose>30.000 2.500 1.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.550 0.550 3.000</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.550 0.550 3.000</size></box></geometry>
+          <material>
+            <ambient>0.860 0.480 0.200 1.000</ambient>
+            <diffuse>0.860 0.480 0.200 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_link_cabinet_0'>
+        <pose>-45.000 5.550 0.900 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+          <material>
+            <ambient>0.240 0.460 0.680 1.000</ambient>
+            <diffuse>0.240 0.460 0.680 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_link_cabinet_1'>
+        <pose>-37.000 -5.550 0.900 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+          <material>
+            <ambient>0.240 0.460 0.680 1.000</ambient>
+            <diffuse>0.240 0.460 0.680 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_link_cabinet_2'>
+        <pose>-29.000 5.550 0.900 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+          <material>
+            <ambient>0.240 0.460 0.680 1.000</ambient>
+            <diffuse>0.240 0.460 0.680 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_link_cabinet_3'>
+        <pose>29.000 -5.550 0.900 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+          <material>
+            <ambient>0.240 0.460 0.680 1.000</ambient>
+            <diffuse>0.240 0.460 0.680 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_link_cabinet_4'>
+        <pose>37.000 5.550 0.900 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+          <material>
+            <ambient>0.240 0.460 0.680 1.000</ambient>
+            <diffuse>0.240 0.460 0.680 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_link_cabinet_5'>
+        <pose>45.000 -5.550 0.900 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.900 0.550 1.800</size></box></geometry>
+          <material>
+            <ambient>0.240 0.460 0.680 1.000</ambient>
+            <diffuse>0.240 0.460 0.680 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_planter_0'>
+        <pose>-12.000 -4.000 0.550 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>1.100 1.100 1.100</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>1.100 1.100 1.100</size></box></geometry>
+          <material>
+            <ambient>0.300 0.580 0.280 1.000</ambient>
+            <diffuse>0.300 0.580 0.280 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_planter_1'>
+        <pose>-5.000 4.500 0.550 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>1.100 1.100 1.100</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>1.100 1.100 1.100</size></box></geometry>
+          <material>
+            <ambient>0.300 0.580 0.280 1.000</ambient>
+            <diffuse>0.300 0.580 0.280 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_planter_2'>
+        <pose>4.000 -4.500 0.550 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>1.100 1.100 1.100</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>1.100 1.100 1.100</size></box></geometry>
+          <material>
+            <ambient>0.300 0.580 0.280 1.000</ambient>
+            <diffuse>0.300 0.580 0.280 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_planter_3'>
+        <pose>12.000 4.000 0.550 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>1.100 1.100 1.100</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>1.100 1.100 1.100</size></box></geometry>
+          <material>
+            <ambient>0.300 0.580 0.280 1.000</ambient>
+            <diffuse>0.300 0.580 0.280 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_0'>
+        <pose>-46.000 24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_1'>
+        <pose>-46.000 -24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_2'>
+        <pose>-36.000 24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_3'>
+        <pose>-36.000 -24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_4'>
+        <pose>-26.000 24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_5'>
+        <pose>-26.000 -24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_6'>
+        <pose>-16.000 24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_7'>
+        <pose>-16.000 -24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_8'>
+        <pose>-6.000 24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_9'>
+        <pose>-6.000 -24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_10'>
+        <pose>6.000 24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_11'>
+        <pose>6.000 -24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_12'>
+        <pose>16.000 24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_13'>
+        <pose>16.000 -24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_14'>
+        <pose>26.000 24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_15'>
+        <pose>26.000 -24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_16'>
+        <pose>36.000 24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_17'>
+        <pose>36.000 -24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_18'>
+        <pose>46.000 24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_19'>
+        <pose>46.000 -24.525 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_20'>
+        <pose>-48.000 5.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_21'>
+        <pose>-40.000 -5.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_22'>
+        <pose>-32.000 5.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_23'>
+        <pose>-24.000 -5.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_24'>
+        <pose>24.000 5.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_25'>
+        <pose>32.000 -5.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_26'>
+        <pose>40.000 5.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_27'>
+        <pose>48.000 -5.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_28'>
+        <pose>-18.000 9.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_29'>
+        <pose>-14.000 -9.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_30'>
+        <pose>-9.000 9.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_31'>
+        <pose>-5.000 -9.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_32'>
+        <pose>5.000 9.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_33'>
+        <pose>9.000 -9.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_34'>
+        <pose>14.000 9.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_35'>
+        <pose>18.000 -9.650 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_36'>
+        <pose>19.650 -8.000 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_37'>
+        <pose>-19.650 -5.000 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_38'>
+        <pose>19.650 5.000 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_lidar_feature_39'>
+        <pose>-19.650 8.000 1.350 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.450 0.450 0.600</size></box></geometry>
+          <material>
+            <ambient>0.920 0.320 0.180 1.000</ambient>
+            <diffuse>0.920 0.320 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_0'>
+        <pose>-42.000 0.000 2.580 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 11.750 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 11.750 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_1'>
+        <pose>-27.000 0.000 2.720 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 11.750 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 11.750 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_2'>
+        <pose>27.000 0.000 2.500 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 11.750 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 11.750 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_3'>
+        <pose>42.000 0.000 2.660 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 11.750 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 11.750 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_4'>
+        <pose>-10.000 -17.500 2.540 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_5'>
+        <pose>10.000 17.500 2.700 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_6'>
+        <pose>-26.000 -17.500 2.620 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_7'>
+        <pose>-18.000 -17.500 2.480 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_8'>
+        <pose>-2.000 -17.500 2.660 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_9'>
+        <pose>6.000 -17.500 2.440 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_10'>
+        <pose>14.000 -17.500 2.740 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_11'>
+        <pose>22.000 -17.500 2.560 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_12'>
+        <pose>26.000 17.500 2.600 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_13'>
+        <pose>18.000 17.500 2.460 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_14'>
+        <pose>2.000 17.500 2.680 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_15'>
+        <pose>-6.000 17.500 2.420 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_16'>
+        <pose>-14.000 17.500 2.760 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+      <link name='atrium_overhead_landmark_17'>
+        <pose>-22.000 17.500 2.520 0 0 0</pose>
+        <collision name='collision'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+        </collision>
+        <visual name='visual'>
+          <geometry><box><size>0.340 14.500 0.340</size></box></geometry>
+          <material>
+            <ambient>0.900 0.680 0.180 1.000</ambient>
+            <diffuse>0.900 0.680 0.180 1.000</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+  </world>
+</sdf>

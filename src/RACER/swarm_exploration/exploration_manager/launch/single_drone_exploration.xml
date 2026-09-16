@@ -1,0 +1,215 @@
+<launch>
+    <arg name="drone_id" default="1"/>
+    <arg name="drone_num" default="1"/> <!-- to determine salesman number, etc -->
+    <arg name="init_x" default="0"/>
+    <arg name="init_y" default="0"/>
+    <arg name="init_z" default="0"/> 
+    <arg name="map_size_x" default="22"/>
+    <arg name="map_size_y" default="22"/>
+    <arg name="map_size_z" default="3.5"/>
+    <arg name="map_resolution" default="0.1"/>
+    <arg name="ground_height" default="-1.0"/>
+    <arg name="box_min_x" default="-7.0"/>
+    <arg name="box_min_y" default="-15.0"/>
+    <arg name="box_min_z" default="0.0"/>
+    <arg name="box_max_x" default="7.0"/>
+    <arg name="box_max_y" default="15.0"/>
+    <arg name="box_max_z" default="1.7"/>
+    <arg name="obstacles_inflation" default="0.199"/>
+    <arg name="min_target_execution_time" default="-1.0"/>
+    <arg name="partitioning_consistency_sign" default="1.0"/>
+    <arg name="partitioning_first_grid_bonus" default="0.0"/>
+    <arg name="replan_time" default="0.2"/>
+    <arg name="euclidean_inflation" default="false"/>
+    <arg name="use_measured_replan_start" default="false"/>
+    <arg name="max_ray_length" default="4.5"/>
+    <arg name="virtual_ceil_height" default="-10.0"/>
+    <arg name="visualization_truncate_height" default="10.09"/>
+    <arg name="frontier_cluster_min" default="100"/>
+    <arg name="frontier_down_sample" default="3"/>
+    <arg name="frontier_min_visib_num" default="30"/>
+    <arg name="frontier_min_candidate_clearance" default="0.21"/>
+    <arg name="frontier_wall_gap_max_cells" default="0"/>
+    <arg name="frontier_wall_gap_min_support_cells" default="1"/>
+    <arg name="astar_max_search_time" default="0.001"/>
+    <arg name="kino_max_search_time" default="1.0"/>
+    <arg name="trigger_stagger" default="0.0"/>
+    <arg name="pair_opt_timer_stagger" default="0.0"/>
+    <arg name="attempt_interval" default="0.1"/>
+    <arg name="pair_opt_interval" default="0.5"/>
+    <arg name="state_freshness" default="0.2"/>
+    <arg name="frontier_update_interval" default="0.5"/>
+    <arg name="enable_planning_visualization" default="true"/>
+    <arg name="partitioning_min_unknown" default="4000"/>
+    <arg name="partitioning_min_frontier" default="100"/>
+    <arg name="partitioning_min_free" default="3000"/>
+    <arg name="partitioning_grid_size" default="5.0"/>
+    <!-- <= 0 keeps upstream RACER's full-height XY columns. -->
+    <arg name="partitioning_grid_size_z" default="-1.0"/>
+    <arg name="partitioning_split_known_ratio" default="-1.0"/>
+    <arg name="partitioning_min_unknown_ratio" default="-1.0"/>
+    <arg name="partitioning_require_frontier_for_relevance" default="false"/>
+    <arg name="partitioning_exclude_visited_without_frontier" default="false"/>
+    <arg name="partitioning_max_exact_pair_grids" default="120"/>
+    <arg name="partitioning_exact_drone_grid_dist" default="15.0"/>
+    <arg name="refined_num" default="7"/>
+    <arg name="top_view_num" default="15"/>
+    <!-- 0 selects upstream RACER's LKH ATSP/ACVRP implementation. -->
+    <arg name="fast_grid_tour_threshold" default="0"/>
+    <arg name="fast_frontier_tour_threshold" default="0"/>
+    <arg name="fast_pair_allocation_threshold" default="0"/>
+    <arg name="exact_pair_objective" default="true"/>
+    <arg name="sensor_model" default="camera"/>
+    <arg name="min_translation_progress" default="0.0"/>
+    <arg name="lidar_min_elevation" default="-0.7"/>
+    <arg name="lidar_max_elevation" default="0.9"/>
+    <arg name="max_vel" default="1.5"/>
+    <arg name="max_acc" default="1.0"/>
+    <arg name="odom_prefix" default="odom"/>
+    <arg name="simulation" default="false"/>
+    <arg name="enable_trajectory_server" default="true"/>
+    <arg name="odometry_topic" default="$(arg odom_prefix)_$(arg drone_id)"/>
+    <!-- <arg name="odometry_topic" default="/pcl_render_node/odom_$(arg drone_id)"/> -->
+    <arg name="sensor_pose_topic" default="/pcl_render_node/sensor_pose_$(arg drone_id)"/> 
+    <arg name="depth_topic" default="/pcl_render_node/depth_$(arg drone_id)"/> 
+    <arg name="cloud_topic" default="/pcl_render_node/cloud_$(arg drone_id)"/>
+    <arg name="cx" default="324.0879821777344"/>
+    <arg name="cy" default="239.10362243652344"/>
+    <arg name="fx" default="385.69793701171875"/>
+    <arg name="fy" default="385.69793701171875"/>
+
+
+  <!-- main algorithm params -->
+  <include file="$(find exploration_manager)/launch/single_drone_planner.xml">
+
+    <arg name="drone_id" value="$(arg drone_id)"/>
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="map_size_x" value="$(arg map_size_x)"/>
+    <arg name="map_size_y" value="$(arg map_size_y)"/>
+    <arg name="map_size_z" value="$(arg map_size_z)"/>
+    <arg name="map_resolution" value="$(arg map_resolution)"/>
+    <arg name="ground_height" value="$(arg ground_height)"/>
+    <arg name="box_min_x" value="$(arg box_min_x)"/>
+    <arg name="box_min_y" value="$(arg box_min_y)"/>
+    <arg name="box_min_z" value="$(arg box_min_z)"/>
+    <arg name="box_max_x" value="$(arg box_max_x)"/>
+    <arg name="box_max_y" value="$(arg box_max_y)"/>
+    <arg name="box_max_z" value="$(arg box_max_z)"/>
+    <arg name="obstacles_inflation" value="$(arg obstacles_inflation)"/>
+    <arg name="min_target_execution_time" value="$(arg min_target_execution_time)"/>
+    <arg name="partitioning_consistency_sign" value="$(arg partitioning_consistency_sign)"/>
+    <arg name="partitioning_first_grid_bonus" value="$(arg partitioning_first_grid_bonus)"/>
+    <arg name="replan_time" value="$(arg replan_time)"/>
+    <arg name="euclidean_inflation" value="$(arg euclidean_inflation)"/>
+    <arg name="use_measured_replan_start" value="$(arg use_measured_replan_start)"/>
+    <arg name="max_ray_length" value="$(arg max_ray_length)"/>
+    <arg name="virtual_ceil_height" value="$(arg virtual_ceil_height)"/>
+    <arg name="visualization_truncate_height" value="$(arg visualization_truncate_height)"/>
+    <arg name="frontier_cluster_min" value="$(arg frontier_cluster_min)"/>
+    <arg name="frontier_down_sample" value="$(arg frontier_down_sample)"/>
+    <arg name="frontier_min_visib_num" value="$(arg frontier_min_visib_num)"/>
+    <arg name="frontier_min_candidate_clearance" value="$(arg frontier_min_candidate_clearance)"/>
+    <arg name="frontier_wall_gap_max_cells" value="$(arg frontier_wall_gap_max_cells)"/>
+    <arg name="frontier_wall_gap_min_support_cells" value="$(arg frontier_wall_gap_min_support_cells)"/>
+    <arg name="astar_max_search_time" value="$(arg astar_max_search_time)"/>
+    <arg name="kino_max_search_time" value="$(arg kino_max_search_time)"/>
+    <arg name="trigger_stagger" value="$(arg trigger_stagger)"/>
+    <arg name="pair_opt_timer_stagger" value="$(arg pair_opt_timer_stagger)"/>
+    <arg name="attempt_interval" value="$(arg attempt_interval)"/>
+    <arg name="pair_opt_interval" value="$(arg pair_opt_interval)"/>
+    <arg name="state_freshness" value="$(arg state_freshness)"/>
+    <arg name="frontier_update_interval" value="$(arg frontier_update_interval)"/>
+    <arg name="enable_planning_visualization" value="$(arg enable_planning_visualization)"/>
+    <arg name="partitioning_min_unknown" value="$(arg partitioning_min_unknown)"/>
+    <arg name="partitioning_min_frontier" value="$(arg partitioning_min_frontier)"/>
+    <arg name="partitioning_min_free" value="$(arg partitioning_min_free)"/>
+    <arg name="partitioning_grid_size" value="$(arg partitioning_grid_size)"/>
+    <arg name="partitioning_grid_size_z" value="$(arg partitioning_grid_size_z)"/>
+    <arg name="partitioning_split_known_ratio" value="$(arg partitioning_split_known_ratio)"/>
+    <arg name="partitioning_min_unknown_ratio" value="$(arg partitioning_min_unknown_ratio)"/>
+    <arg name="partitioning_require_frontier_for_relevance"
+         value="$(arg partitioning_require_frontier_for_relevance)"/>
+    <arg name="partitioning_exclude_visited_without_frontier"
+         value="$(arg partitioning_exclude_visited_without_frontier)"/>
+    <arg name="partitioning_max_exact_pair_grids" value="$(arg partitioning_max_exact_pair_grids)"/>
+    <arg name="partitioning_exact_drone_grid_dist" value="$(arg partitioning_exact_drone_grid_dist)"/>
+    <arg name="refined_num" value="$(arg refined_num)"/>
+    <arg name="top_view_num" value="$(arg top_view_num)"/>
+    <arg name="fast_grid_tour_threshold" value="$(arg fast_grid_tour_threshold)"/>
+    <arg name="fast_frontier_tour_threshold" value="$(arg fast_frontier_tour_threshold)"/>
+    <arg name="fast_pair_allocation_threshold" value="$(arg fast_pair_allocation_threshold)"/>
+    <arg name="exact_pair_objective" value="$(arg exact_pair_objective)"/>
+    <arg name="sensor_model" value="$(arg sensor_model)"/>
+    <arg name="min_translation_progress" value="$(arg min_translation_progress)"/>
+    <arg name="lidar_min_elevation" value="$(arg lidar_min_elevation)"/>
+    <arg name="lidar_max_elevation" value="$(arg lidar_max_elevation)"/>
+
+    <arg name="odometry_topic" default="$(arg odometry_topic)"/>
+    <arg name="sensor_pose_topic" value="$(arg sensor_pose_topic)"/> 
+
+    <!-- sensor pose: transform of camera frame in the world frame -->
+    <!-- depth topic: depth image, 640x480 by default -->
+    <!-- cloud topic: point cloud measurement  -->
+    <!-- subscribe ONLY TO ONE of the two topics -->
+    <arg name="depth_topic" value="$(arg depth_topic)"/> 
+
+    <arg name="cloud_topic" value="$(arg cloud_topic)"/>
+
+    <!-- intrinsic params of the depth camera -->
+    <arg name="cx" value="$(arg cx)"/>
+    <arg name="cy" value="$(arg cy)"/>
+    <arg name="fx" value="$(arg fx)"/>
+    <arg name="fy" value="$(arg fy)"/>
+
+    <!-- maximum velocity and acceleration the drone will reach -->
+    <arg name="max_vel" value="$(arg max_vel)" />
+    <arg name="max_acc" value="$(arg max_acc)" />
+    <!-- <arg name="max_vel" value="1.0" />
+    <arg name="max_acc" value="0.8" /> -->
+    <arg name="simulation" value="$(arg simulation)" />
+  </include>
+
+  <!-- trajectory server -->
+  <node pkg="plan_manage" name="traj_server_$(arg drone_id)" type="traj_server" output="screen"
+        if="$(arg enable_trajectory_server)">
+    <remap from="/odom_world" to="$(arg odometry_topic)"/>
+
+    <remap from="/planning/bspline" to="/planning/bspline_$(arg drone_id)" />
+    <remap from="/planning/replan" to="/planning/replan_$(arg drone_id)" />
+    <remap from="/planning/new" to="/planning/new_$(arg drone_id)" />
+    
+    <remap from="/position_cmd" to="planning/pos_cmd_$(arg drone_id)"/>
+    <remap from="planning/position_cmd_vis" to="planning/position_cmd_vis_$(arg drone_id)" />
+    <remap from="planning/travel_traj" to="planning/travel_traj_$(arg drone_id)" />
+
+    <param name="traj_server/time_forward" value="1.5" type="double"/>
+    <param name="traj_server/pub_traj_id" value="4" type="int"/>
+    <param name="traj_server/drone_id" value="$(arg drone_id)" type="int"/>
+    <param name="traj_server/drone_num" value="$(arg drone_num)" type="int"/>
+    
+    <param name="perception_utils/top_angle" value="0.56125" type="double"/>
+    <param name="perception_utils/left_angle" value="0.69222" type="double"/>
+    <param name="perception_utils/right_angle" value="0.68901" type="double"/>
+    <param name="perception_utils/max_dist" value="4.5" type="double"/>
+    <param name="perception_utils/vis_dist" value="1.0" type="double"/>
+  </node>
+
+  <!-- use simulator -->
+  <include file="$(find exploration_manager)/launch/simulator_light.xml" if="$(arg simulation)">
+    <arg name="drone_id" value="$(arg drone_id)"/>
+    <arg name="drone_num" value="$(arg drone_num)"/>
+    <arg name="init_x"   value="$(arg init_x)"/>
+    <arg name="init_y"   value="$(arg init_y)"/>
+    <arg name="init_z"   value="$(arg init_z)"/> 
+    <arg name="map_size_x" value="$(arg map_size_x)"/>
+    <arg name="map_size_y" value="$(arg map_size_y)"/>
+    <arg name="map_size_z" value="$(arg map_size_z)"/>
+    <arg name="odometry_topic" value="$(arg odom_prefix)_$(arg drone_id)" />
+  </include>
+
+  <!-- lcm communication -->
+  <!-- <include file="$(find inf_uwb_ros)/launch/uwb_node_sim.launch" if="$(arg simulation)">
+    <arg name="self_id" value="$(arg drone_id)"/>
+  </include> -->
+
+</launch>

@@ -1,0 +1,48 @@
+racer_frame_adapter:
+  ros__parameters:
+    use_sim_time: true
+    uav_ids: [1, 2, 3, 4, 5, 6]
+    root_id: 1
+    robot_prefix: "bot"
+    root_frame: "map_origin"
+    output_frame: "world"
+
+    # Fixed transform from Swarm-LIO's common root into RACER's finite planning
+    # map (p_racer = p_root + t).  bot1 (root) spawns at Gazebo (26, 38, 36),
+    # yaw 0, and drone_racer.world spans Gazebo x,y in [0, 50], z in [0, 50].
+    # t = (1, 13, 36) puts the RACER box centre (0, 0) at Gazebo (25, 25) so
+    # the +/-25 m planning box covers the whole building; the old [0, 0, 36]
+    # centred the box on bot1 and left the y < 13 m strip of the building
+    # outside the map while tasking 13 m of empty air beyond y = 50.
+    # z: RACER z == Gazebo z (floor 0, roof 50).
+    output_transform_translation: [1.0, 13.0, 36.0]
+    output_transform_rotation_xyzw: [0.0, 0.0, 0.0, 1.0]
+
+    # Freeze the common frame before RACER starts accumulating occupancy.
+    latch_transforms: true
+    # Do not confuse a temporarily static, partially initialized transform
+    # graph with a completed Swarm-LIO2 trajectory match. The controller
+    # releases this gate only after every closed 3-D excitation and all root
+    # identity matches have completed.
+    require_bootstrap_complete: true
+    stability_window_seconds: 3.0
+    max_translation_drift: 0.05
+    max_rotation_drift_deg: 0.5
+
+    # Keep a bad local LIO update out of RACER's occupancy map and command
+    # feedback. The low-level attitude reference is the same onboard IMU used
+    # by Swarm-LIO2; no Gazebo truth pose is consumed.
+    validate_slam_state: true
+    # RACER commands at most 1.5 m/s. Reject an estimator runaway before its
+    # erroneous pose can drive the physical controller into a wall.
+    max_slam_speed: 2.2
+    max_pose_jump_speed: 2.2
+    pose_jump_margin: 0.25
+    max_gravity_disagreement_deg: 25.0
+    max_imu_stamp_delta: 0.5
+    recovery_samples_required: 5
+
+    # Swarm-LIO2 mapping/LI_extrinsic_* convention: LiDAR origin in IMU/body.
+    # The simulated LiDAR is 0.095 m above the IMU.
+    lidar_extrinsic_translation: [0.0, 0.0, 0.095]
+    lidar_extrinsic_rotation_xyzw: [0.0, 0.0, 0.0, 1.0]

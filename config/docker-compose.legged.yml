@@ -1,0 +1,30 @@
+# Overlay: replace the wheeled quadruped proxy with two Unitree Go2 (quadruped_ros2_control).
+#   docker compose -f docker-compose.yml -f docker-compose.racer-live.yml -f docker-compose.quadruped.yml \
+#                  -f docker-compose.legged.yml up -d gazebo swarm_lio2 racer_ros1 racer_controller
+services:
+  gazebo:
+    image: fishbot_multirobot_sim-legged:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.legged
+      args:
+        BASE_IMAGE: fishbot_multirobot_sim-gazebo:latest
+        HTTP_PROXY: http://127.0.0.1:7890
+        HTTPS_PROXY: http://127.0.0.1:7890
+        NO_PROXY: localhost,127.0.0.1
+      network: host
+    environment:
+      # Bridge tuning must be exported INTO the container: the launch file reads
+      # these via os.environ (compose command-line exports don't cover them).
+      LEGGED_MIN_STEP_SPEED: "${LEGGED_MIN_STEP_SPEED:-0.28}"
+      LEGGED_PARK_WHEN_IDLE: "${LEGGED_PARK_WHEN_IDLE:-true}"
+      LEGGED_IDLE_PARK_SECONDS: "${LEGGED_IDLE_PARK_SECONDS:-3.0}"
+      LEGGED_MAX_LINEAR_ACCEL: "${LEGGED_MAX_LINEAR_ACCEL:-0.35}"
+      LEGGED_MAX_ANGULAR_ACCEL: "${LEGGED_MAX_ANGULAR_ACCEL:-1.0}"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${HOME}/.Xauthority:/root/.Xauthority:ro
+      - ./src/gazebo_sim/worlds:/fishbot_ws/src/gazebo_sim/worlds:ro
+      - ./src/legged/legged_sim:/legged_ws/src/legged_sim:ro
+    command: >
+      bash -lc "export SPAWN_POSES='${QUADRUPED_SPAWN_POSES:-[[-4.0,0.0,0.45,0.0],[4.0,0.0,0.45,0.0]]}'; export LEGGED_CONTROLLER=${LEGGED_CONTROLLER:-rl} LEGGED_AUTO_TROT=${LEGGED_AUTO_TROT:-true} LEGGED_RL_MODEL=${LEGGED_RL_MODEL:-himloco}; ros2 launch legged_sim legged_atrium.launch.py world:=/fishbot_ws/src/gazebo_sim/worlds/${QUADRUPED_WORLD:-teaching_building_atrium_legged.world} headless:=true count:=${LEGGED_COUNT:-2} vx_limit:=${LEGGED_VX_LIMIT:-0.4} vy_limit:=${LEGGED_VY_LIMIT:-0.3} wz_limit:=${LEGGED_WZ_LIMIT:-0.5} auto_trot:=${LEGGED_AUTO_TROT:-true} locomotion:=${LEGGED_CONTROLLER:-guide}"

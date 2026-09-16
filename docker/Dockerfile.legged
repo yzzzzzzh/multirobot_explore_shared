@@ -1,0 +1,49 @@
+# Gazebo Fortress + ros2_control + quadruped_ros2_control (humble branch) on top of the
+# existing simulation image.  Adds two Unitree Go2 with the unitree_guide trot controller.
+ARG BASE_IMAGE=fishbot_multirobot_sim-gazebo:latest
+FROM ${BASE_IMAGE}
+SHELL ["/bin/bash", "-c"]
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG NO_PROXY
+ENV http_proxy=${HTTP_PROXY}
+ENV https_proxy=${HTTPS_PROXY}
+ENV no_proxy=${NO_PROXY}
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ros-humble-ros2-control \
+        ros-humble-ros2-controllers \
+        ros-humble-controller-manager \
+        ros-humble-hardware-interface \
+        ros-humble-controller-interface \
+        ros-humble-joint-state-broadcaster \
+        ros-humble-imu-sensor-broadcaster \
+        ros-humble-kdl-parser \
+        ros-humble-backward-ros \
+        ros-humble-yaml-cpp-vendor \
+        ros-humble-xacro \
+        ros-humble-robot-state-publisher \
+        ros-humble-joint-state-publisher \
+        libignition-gazebo6-dev \
+        libignition-plugin-dev \
+        libyaml-cpp-dev \
+        python3-numpy \
+        unzip
+# libtorch (CPU, cxx11 ABI) for the RL locomotion controller
+RUN cd /opt && wget -q https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.5.0%2Bcpu.zip -O libtorch.zip \
+    && unzip -q libtorch.zip && rm libtorch.zip
+ENV Torch_DIR=/opt/libtorch
+ENV LD_LIBRARY_PATH=/opt/libtorch/lib:${LD_LIBRARY_PATH}
+WORKDIR /legged_ws
+COPY src/legged/ src/
+RUN source /opt/ros/humble/setup.bash \
+    && rosdep install --rosdistro humble --from-paths src --ignore-src -y \
+        --skip-keys "gz_sim_vendor gz_plugin_vendor joint_state_publisher_gui" || true
+RUN source /opt/ros/humble/setup.bash \
+    && colcon build --merge-install --symlink-install \
+        --cmake-args -DCMAKE_BUILD_TYPE=Release -DTorch_DIR=/opt/libtorch/share/cmake/Torch
+RUN echo "source /legged_ws/install/setup.bash" >> ~/.bashrc
+COPY docker/entrypoint_legged.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]

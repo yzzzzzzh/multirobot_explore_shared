@@ -1,0 +1,132 @@
+# 定义了六个服务，每个服务对应一个容器（可以认为是一个独立配置的ubuntu系统，但是共享主机的核）。前面看的那些 -f docker-compose.xxx.yml 文件都是在这一层上做覆盖。
+# 这一层本身描述的是原始的五台轮式 fishbot 在迷宫里的配置，机器狗配置靠后面的覆盖文件改出来。
+# 对于每个service块，在command 之前：容器怎么建。用哪个镜像（image / build）、挂载哪些目录（volumes）、注入哪些环境变量（environment / env_file）、网络怎么接（network_mode）、要不要 GPU（runtime / gpus）、容器叫什么名字（container_name）。这些决定了容器启动时的"环境"。
+# command：容器建好后，在里面执行的第一个也是唯一一个前台进程。这个进程退出，容器就停止
+services:
+  base:
+    image: fishbot_base:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        HTTP_PROXY: http://127.0.0.1:7890
+        HTTPS_PROXY: http://127.0.0.1:7890
+        NO_PROXY: localhost,127.0.0.1,::1
+    command: ["true"]
+
+  gazebo:
+    container_name: fishbot_gazebo
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.gazebo
+      args:
+        BASE_IMAGE: fishbot_base:latest
+    depends_on:
+      - base
+    ipc: host
+    tty: true
+    runtime: nvidia
+    privileged: true
+    network_mode: host
+    env_file: ./docker/ros.env
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - QT_X11_NO_MITSHM=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${HOME}/.Xauthority:/root/.Xauthority:ro
+      - ./src/gazebo_sim/:/fishbot_ws/src/gazebo_sim/
+    command: >
+      bash -lc "ln -sf /fishbot_ws/src/gazebo_sim/worlds/fishbot_maze.world /fishbot_ws/install/share/gazebo_sim/worlds/fishbot_maze.world;
+        ros2 launch gazebo_sim quick.launch.py world:=fishbot_maze.world pattern:=circle x:=0 y:=0 spacing:=0.7 count:=5"
+
+  # navigation:
+  #   container_name: fishbot_navigation
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.navigation
+  #     args:
+  #       BASE_IMAGE: fishbot_base:latest
+  #   depends_on:
+  #     - base
+  #   network_mode: host
+  #   ipc: host
+  #   tty: true
+  #   env_file: ./docker/ros.env
+  #   environment:
+  #     - FISHBOT_NAV_ROBOTS=${FISHBOT_NAV_ROBOTS:-bot1}
+  #   volumes:
+  #     - ./src/navigation/:/fishbot_ws/src/navigation/
+  #   command: >
+  #     bash -lc "ros2 launch fishbot_navigation navigation.launch.py robots:=${FISHBOT_NAV_ROBOTS:-bot1}"
+
+  foxglove:
+    container_name: fishbot_foxglove
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.foxglove
+      args:
+        BASE_IMAGE: fishbot_base:latest
+    depends_on:
+      - base
+    network_mode: host
+    ipc: host
+    tty: true
+    env_file: ./docker/ros.env
+    environment:
+      - FOXGLOVE_PORT=${FOXGLOVE_PORT:-8765}
+      - FOXGLOVE_ADDRESS=${FOXGLOVE_ADDRESS:-0.0.0.0}
+    volumes:
+      - ./src/foxglove_app/:/fishbot_ws/src/foxglove_app/
+    command: >
+      bash -lc "
+        set -e
+        cd /fishbot_ws/src/foxglove_app/scripts
+        python3 ./gen_foxglove_tabs.py --bots bot1 bot2 bot3 bot4 bot5 --out ../layouts/foxglove_multi_robot_tabs.json
+        export FOXGLOVE_OPEN_IN=\${FOXGLOVE_OPEN_IN:-desktop}
+        python3 ./print_foxglove_link.py
+        cd /fishbot_ws
+        ros2 launch fishbot_foxglove foxglove.launch.py port:=${FOXGLOVE_PORT:-8765} address:=${FOXGLOVE_ADDRESS:-0.0.0.0}
+      "
+
+  swarm_lio2:
+    extends:
+      file: ./src/Swarm-LIO2-ROS2-Docker/docker/docker-compose.yaml
+      service: swarm_lio2_ros2
+    command: >
+      bash -lc "
+        source /opt/ros/humble/setup.bash
+        source /opt/swarm_lio_ws/install/setup.bash
+        ros2 launch swarm_lio simulation.launch.py bot_list:=1,2,3,4,5 rviz_list:=1 use_sim_time:=true
+      "
+
+  map_fusion:
+    container_name: map_fusion
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.map_fusion
+      args:
+        BASE_IMAGE: fishbot_base:latest
+    depends_on:
+      - base
+    ipc: host
+    tty: true
+    privileged: true
+    runtime: nvidia
+    gpus: all
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    network_mode: host
+    env_file: ./docker/ros.env
+    volumes:
+      - ./src/map_fusion/:/fishbot_ws/src/map_fusion/
+    command: >
+      bash -lc "ros2 launch map_fusion map_fusion.launch.py root_id:=1 uav_ids:=1,2,3,4,5 use_sim_time:=true"

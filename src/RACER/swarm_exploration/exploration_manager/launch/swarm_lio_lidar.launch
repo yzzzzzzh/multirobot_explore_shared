@@ -1,0 +1,531 @@
+<launch>
+  <!--
+    LiDAR-only RACER frontend for Swarm-LIO2.
+
+    No map generator, depth renderer, camera driver, or synthetic odometry is
+    launched here. Every exploration node consumes only:
+      /racer/botN/cloud_world   registered current Mid-360 scan
+      /racer/botN/lidar_pose    ray origin paired with that scan
+      /racer/botN/odom_world    Swarm-LIO2 body odometry
+  -->
+  <arg name="uav_count" default="1"/>
+  <!-- RACER's official multi-UAV launch files reserve the last entry in
+       exploration/drone_num for the ground/map relay: the official 2-UAV
+       launch therefore uses drone_num=3 while starting only UAVs 1 and 2.
+       Keep the single-UAV mode at its native value of 1, and add the reserved
+       entry only for actual swarm runs. -->
+  <arg name="racer_drone_num"
+       default="$(eval int(arg('uav_count')) if int(arg('uav_count')) == 1 else int(arg('uav_count')) + 1)"/>
+  <arg name="enable_trajectory_server" default="false"/>
+
+  <!-- drone_racer.world is 50 x 50 x 50 m. The adapter centers x/y around
+       (25,25), while z remains Gazebo altitude. A 0.25 m planning grid keeps
+       one map near 9 million voxels instead of the unsafe 140+ million that
+       the official 0.1 m resolution would allocate for this volume. -->
+  <arg name="map_size_x" default="52.0"/>
+  <arg name="map_size_y" default="52.0"/>
+  <arg name="map_size_z" default="52.0"/>
+  <arg name="map_resolution" default="0.25"/>
+  <arg name="ground_height" default="-1.0"/>
+  <arg name="box_min_x" default="-25.0"/>
+  <arg name="box_min_y" default="-25.0"/>
+  <arg name="box_min_z" default="0.0"/>
+  <arg name="box_max_x" default="25.0"/>
+  <arg name="box_max_y" default="25.0"/>
+  <arg name="box_max_z" default="50.0"/>
+  <!-- RACER uses 0.199 m for its smaller simulated vehicle. At 0.25 m map
+       resolution, 0.76 m selects a four-voxel (1.00 m) shell, matching the
+       quad_mid360 raw-LiDAR stopping envelope (0.90 m) with one map-cell
+       allowance for tracking lag and LiDAR/LIO timing.
+       The one-way A* escape rule still handles a delayed shared-map update
+       that places the current free voxel inside this shell. -->
+  <arg name="obstacles_inflation" default="0.76"/>
+  <arg name="min_target_execution_time" default="-1.0"/>
+  <arg name="partitioning_consistency_sign" default="1.0"/>
+  <arg name="partitioning_first_grid_bonus" default="0.0"/>
+  <arg name="replan_time" default="0.2"/>
+  <!-- Preserve upstream cube inflation unless a planar platform explicitly
+       requests a circular Euclidean footprint. -->
+  <arg name="euclidean_inflation" default="false"/>
+  <!-- Ground robots cannot exactly follow RACER's holonomic B-spline.  When
+       enabled, every replan starts from current odometry rather than a future
+       point on the previous spline. UAV behavior remains unchanged. -->
+  <arg name="use_measured_replan_start" default="false"/>
+  <arg name="max_ray_length" default="10.0"/>
+  <arg name="virtual_ceil_height" default="50.0"/>
+  <arg name="visualization_truncate_height" default="50.0"/>
+  <!-- The official values target a 0.10 m depth-camera grid. Frontier cells
+       are a surface quantity, so scale count thresholds by (0.10/0.25)^2 and
+       keep the downsample leaf near the original 0.30 m. -->
+  <arg name="frontier_cluster_min" default="16"/>
+  <arg name="frontier_down_sample" default="1"/>
+  <arg name="frontier_min_visib_num" default="5"/>
+  <arg name="frontier_min_candidate_clearance" default="1.0"/>
+  <arg name="frontier_wall_gap_max_cells" default="0"/>
+  <arg name="frontier_wall_gap_min_support_cells" default="1"/>
+  <!-- Ratio thresholds preserve RACER's published adaptive-HGrid behavior
+       across map resolutions and prevent premature 3-D subdivision. -->
+  <arg name="partitioning_min_unknown" default="256"/>
+  <arg name="partitioning_min_frontier" default="16"/>
+  <arg name="partitioning_min_free" default="192"/>
+  <!-- Keep unseen volume coarse and split observed volume to cells matching
+       the 10 m LiDAR range. A 20 m coarse cell yields 3 x 3 x 3 roots and
+       10 m children, avoiding the 100+ simultaneous ACVRP customers that
+       made the official LKH solver miss its real-time budget. -->
+  <arg name="partitioning_grid_size" default="20.0"/>
+  <arg name="partitioning_grid_size_z" default="20.0"/>
+  <arg name="partitioning_split_known_ratio" default="0.075"/>
+  <arg name="partitioning_min_unknown_ratio" default="0.40"/>
+  <arg name="partitioning_require_frontier_for_relevance" default="false"/>
+  <arg name="partitioning_exclude_visited_without_frontier" default="false"/>
+  <!-- Keep the official LKH/ACVRP solver and RACER's hybrid HGrid cost.
+       Up to 24 tasks, every neighboring edge uses obstacle-aware A*. Above
+       that burst size, each HGrid retains exact A* to its two closest local
+       neighbors while other edges use RACER's penalized geometric cost. -->
+  <arg name="partitioning_max_exact_pair_grids" default="24"/>
+  <arg name="partitioning_exact_drone_grid_dist" default="15.0"/>
+  <arg name="refined_num" default="3"/>
+  <arg name="top_view_num" default="5"/>
+  <arg name="sensor_model" default="lidar_3d"/>
+  <!-- A 360-degree LiDAR obtains no new information from an in-place yaw
+       trajectory. Reject sub-cell translations instead of counting hover as
+       successful exploration. -->
+  <arg name="min_translation_progress" default="0.5"/>
+  <arg name="lidar_min_elevation" default="-0.7"/>
+  <arg name="lidar_max_elevation" default="0.9"/>
+  <!-- Keep the high-volume geometric A* queries used by HGrid/CVRP bounded
+       to 20 ms. The local kinodynamic search has a separate, longer budget. -->
+  <!-- 100 ms: a 20 ms budget timed out on every cross-room detour of the
+       100 x 50 m planar map (0.3 m lattice), leaving the robot replanning
+       the same unreachable goal forever. -->
+  <arg name="astar_max_search_time" default="0.100"/>
+  <!-- The ground-platform test needs enough time to search a dynamically
+       feasible detour through narrow known-free corridors. -->
+  <arg name="kino_max_search_time" default="1.000"/>
+  <!-- Preserve the official distributed allocator but pace six simultaneous
+       ACVRP processes and phase the first full planning calls. -->
+  <arg name="trigger_stagger" default="0.15"/>
+  <arg name="pair_opt_timer_stagger" default="0.12"/>
+  <arg name="attempt_interval" default="5.0"/>
+  <arg name="pair_opt_interval" default="5.0"/>
+  <!-- Upstream uses 0.2 s. Six concurrent 3D HGrid callbacks can delay the
+       single-threaded state callback, so this integration accepts a bounded
+       3 s-old state while retaining message timestamps and pair pacing. -->
+  <arg name="state_freshness" default="3.0"/>
+  <arg name="frontier_update_interval" default="2.0"/>
+  <!-- Recorder visualization is generated outside the planner. Disable the
+       high-volume frontier/trajectory Marker stream for the 6-UAV run. -->
+  <arg name="enable_planning_visualization" default="true"/>
+  <!-- Keep RACER's official dynamic limits for trajectory feasibility.
+       The Gazebo velocity tracker applies its own lower command limits. -->
+  <arg name="max_vel" default="1.5"/>
+  <arg name="max_acc" default="1.0"/>
+
+  <group if="$(eval int(arg('uav_count')) &gt;= 1)">
+    <include file="$(find exploration_manager)/launch/single_drone_exploration.xml">
+      <arg name="drone_id" value="1"/>
+      <arg name="drone_num" value="$(arg racer_drone_num)"/>
+      <arg name="simulation" value="false"/>
+      <arg name="enable_trajectory_server" value="$(arg enable_trajectory_server)"/>
+      <arg name="odometry_topic" value="/racer/bot1/odom_world"/>
+      <arg name="sensor_pose_topic" value="/racer/bot1/lidar_pose"/>
+      <arg name="cloud_topic" value="/racer/bot1/cloud_world"/>
+      <arg name="depth_topic" value="/racer/disabled_depth"/>
+      <arg name="map_size_x" value="$(arg map_size_x)"/>
+      <arg name="map_size_y" value="$(arg map_size_y)"/>
+      <arg name="map_size_z" value="$(arg map_size_z)"/>
+      <arg name="map_resolution" value="$(arg map_resolution)"/>
+      <arg name="ground_height" value="$(arg ground_height)"/>
+      <arg name="box_min_x" value="$(arg box_min_x)"/>
+      <arg name="box_min_y" value="$(arg box_min_y)"/>
+      <arg name="box_min_z" value="$(arg box_min_z)"/>
+      <arg name="box_max_x" value="$(arg box_max_x)"/>
+      <arg name="box_max_y" value="$(arg box_max_y)"/>
+      <arg name="box_max_z" value="$(arg box_max_z)"/>
+      <arg name="obstacles_inflation" value="$(arg obstacles_inflation)"/>
+      <arg name="min_target_execution_time" value="$(arg min_target_execution_time)"/>
+      <arg name="partitioning_consistency_sign" value="$(arg partitioning_consistency_sign)"/>
+      <arg name="partitioning_first_grid_bonus" value="$(arg partitioning_first_grid_bonus)"/>
+      <arg name="replan_time" value="$(arg replan_time)"/>
+      <arg name="euclidean_inflation" value="$(arg euclidean_inflation)"/>
+      <arg name="use_measured_replan_start" value="$(arg use_measured_replan_start)"/>
+      <arg name="max_ray_length" value="$(arg max_ray_length)"/>
+      <arg name="virtual_ceil_height" value="$(arg virtual_ceil_height)"/>
+      <arg name="visualization_truncate_height" value="$(arg visualization_truncate_height)"/>
+      <arg name="frontier_cluster_min" value="$(arg frontier_cluster_min)"/>
+      <arg name="frontier_down_sample" value="$(arg frontier_down_sample)"/>
+      <arg name="frontier_min_visib_num" value="$(arg frontier_min_visib_num)"/>
+      <arg name="frontier_min_candidate_clearance" value="$(arg frontier_min_candidate_clearance)"/>
+      <arg name="frontier_wall_gap_max_cells" value="$(arg frontier_wall_gap_max_cells)"/>
+      <arg name="frontier_wall_gap_min_support_cells" value="$(arg frontier_wall_gap_min_support_cells)"/>
+      <arg name="partitioning_min_unknown" value="$(arg partitioning_min_unknown)"/>
+      <arg name="partitioning_min_frontier" value="$(arg partitioning_min_frontier)"/>
+      <arg name="partitioning_min_free" value="$(arg partitioning_min_free)"/>
+      <arg name="partitioning_grid_size" value="$(arg partitioning_grid_size)"/>
+      <arg name="partitioning_grid_size_z" value="$(arg partitioning_grid_size_z)"/>
+      <arg name="partitioning_split_known_ratio" value="$(arg partitioning_split_known_ratio)"/>
+      <arg name="partitioning_min_unknown_ratio" value="$(arg partitioning_min_unknown_ratio)"/>
+      <arg name="partitioning_require_frontier_for_relevance" value="$(arg partitioning_require_frontier_for_relevance)"/>
+      <arg name="partitioning_exclude_visited_without_frontier" value="$(arg partitioning_exclude_visited_without_frontier)"/>
+      <arg name="partitioning_max_exact_pair_grids" value="$(arg partitioning_max_exact_pair_grids)"/>
+      <arg name="partitioning_exact_drone_grid_dist" value="$(arg partitioning_exact_drone_grid_dist)"/>
+      <arg name="refined_num" value="$(arg refined_num)"/>
+      <arg name="top_view_num" value="$(arg top_view_num)"/>
+      <arg name="sensor_model" value="$(arg sensor_model)"/>
+      <arg name="min_translation_progress" value="$(arg min_translation_progress)"/>
+      <arg name="lidar_min_elevation" value="$(arg lidar_min_elevation)"/>
+      <arg name="lidar_max_elevation" value="$(arg lidar_max_elevation)"/>
+      <arg name="astar_max_search_time" value="$(arg astar_max_search_time)"/>
+      <arg name="kino_max_search_time" value="$(arg kino_max_search_time)"/>
+      <arg name="trigger_stagger" value="$(arg trigger_stagger)"/>
+      <arg name="pair_opt_timer_stagger" value="$(arg pair_opt_timer_stagger)"/>
+      <arg name="attempt_interval" value="$(arg attempt_interval)"/>
+      <arg name="pair_opt_interval" value="$(arg pair_opt_interval)"/>
+      <arg name="state_freshness" value="$(arg state_freshness)"/>
+      <arg name="frontier_update_interval" value="$(arg frontier_update_interval)"/>
+      <arg name="enable_planning_visualization" value="$(arg enable_planning_visualization)"/>
+      <arg name="max_vel" value="$(arg max_vel)"/>
+      <arg name="max_acc" value="$(arg max_acc)"/>
+    </include>
+  </group>
+
+  <group if="$(eval int(arg('uav_count')) &gt;= 2)">
+    <include file="$(find exploration_manager)/launch/single_drone_exploration.xml">
+      <arg name="drone_id" value="2"/>
+      <arg name="drone_num" value="$(arg racer_drone_num)"/>
+      <arg name="simulation" value="false"/>
+      <arg name="enable_trajectory_server" value="$(arg enable_trajectory_server)"/>
+      <arg name="odometry_topic" value="/racer/bot2/odom_world"/>
+      <arg name="sensor_pose_topic" value="/racer/bot2/lidar_pose"/>
+      <arg name="cloud_topic" value="/racer/bot2/cloud_world"/>
+      <arg name="depth_topic" value="/racer/disabled_depth"/>
+      <arg name="map_size_x" value="$(arg map_size_x)"/>
+      <arg name="map_size_y" value="$(arg map_size_y)"/>
+      <arg name="map_size_z" value="$(arg map_size_z)"/>
+      <arg name="map_resolution" value="$(arg map_resolution)"/>
+      <arg name="ground_height" value="$(arg ground_height)"/>
+      <arg name="box_min_x" value="$(arg box_min_x)"/>
+      <arg name="box_min_y" value="$(arg box_min_y)"/>
+      <arg name="box_min_z" value="$(arg box_min_z)"/>
+      <arg name="box_max_x" value="$(arg box_max_x)"/>
+      <arg name="box_max_y" value="$(arg box_max_y)"/>
+      <arg name="box_max_z" value="$(arg box_max_z)"/>
+      <arg name="obstacles_inflation" value="$(arg obstacles_inflation)"/>
+      <arg name="min_target_execution_time" value="$(arg min_target_execution_time)"/>
+      <arg name="partitioning_consistency_sign" value="$(arg partitioning_consistency_sign)"/>
+      <arg name="partitioning_first_grid_bonus" value="$(arg partitioning_first_grid_bonus)"/>
+      <arg name="replan_time" value="$(arg replan_time)"/>
+      <arg name="euclidean_inflation" value="$(arg euclidean_inflation)"/>
+      <arg name="use_measured_replan_start" value="$(arg use_measured_replan_start)"/>
+      <arg name="max_ray_length" value="$(arg max_ray_length)"/>
+      <arg name="virtual_ceil_height" value="$(arg virtual_ceil_height)"/>
+      <arg name="visualization_truncate_height" value="$(arg visualization_truncate_height)"/>
+      <arg name="frontier_cluster_min" value="$(arg frontier_cluster_min)"/>
+      <arg name="frontier_down_sample" value="$(arg frontier_down_sample)"/>
+      <arg name="frontier_min_visib_num" value="$(arg frontier_min_visib_num)"/>
+      <arg name="frontier_min_candidate_clearance" value="$(arg frontier_min_candidate_clearance)"/>
+      <arg name="frontier_wall_gap_max_cells" value="$(arg frontier_wall_gap_max_cells)"/>
+      <arg name="frontier_wall_gap_min_support_cells" value="$(arg frontier_wall_gap_min_support_cells)"/>
+      <arg name="partitioning_min_unknown" value="$(arg partitioning_min_unknown)"/>
+      <arg name="partitioning_min_frontier" value="$(arg partitioning_min_frontier)"/>
+      <arg name="partitioning_min_free" value="$(arg partitioning_min_free)"/>
+      <arg name="partitioning_grid_size" value="$(arg partitioning_grid_size)"/>
+      <arg name="partitioning_grid_size_z" value="$(arg partitioning_grid_size_z)"/>
+      <arg name="partitioning_split_known_ratio" value="$(arg partitioning_split_known_ratio)"/>
+      <arg name="partitioning_min_unknown_ratio" value="$(arg partitioning_min_unknown_ratio)"/>
+      <arg name="partitioning_require_frontier_for_relevance" value="$(arg partitioning_require_frontier_for_relevance)"/>
+      <arg name="partitioning_exclude_visited_without_frontier" value="$(arg partitioning_exclude_visited_without_frontier)"/>
+      <arg name="partitioning_max_exact_pair_grids" value="$(arg partitioning_max_exact_pair_grids)"/>
+      <arg name="partitioning_exact_drone_grid_dist" value="$(arg partitioning_exact_drone_grid_dist)"/>
+      <arg name="refined_num" value="$(arg refined_num)"/>
+      <arg name="top_view_num" value="$(arg top_view_num)"/>
+      <arg name="sensor_model" value="$(arg sensor_model)"/>
+      <arg name="min_translation_progress" value="$(arg min_translation_progress)"/>
+      <arg name="lidar_min_elevation" value="$(arg lidar_min_elevation)"/>
+      <arg name="lidar_max_elevation" value="$(arg lidar_max_elevation)"/>
+      <arg name="astar_max_search_time" value="$(arg astar_max_search_time)"/>
+      <arg name="kino_max_search_time" value="$(arg kino_max_search_time)"/>
+      <arg name="trigger_stagger" value="$(arg trigger_stagger)"/>
+      <arg name="pair_opt_timer_stagger" value="$(arg pair_opt_timer_stagger)"/>
+      <arg name="attempt_interval" value="$(arg attempt_interval)"/>
+      <arg name="pair_opt_interval" value="$(arg pair_opt_interval)"/>
+      <arg name="state_freshness" value="$(arg state_freshness)"/>
+      <arg name="frontier_update_interval" value="$(arg frontier_update_interval)"/>
+      <arg name="enable_planning_visualization" value="$(arg enable_planning_visualization)"/>
+      <arg name="max_vel" value="$(arg max_vel)"/>
+      <arg name="max_acc" value="$(arg max_acc)"/>
+    </include>
+  </group>
+
+  <group if="$(eval int(arg('uav_count')) &gt;= 3)">
+    <include file="$(find exploration_manager)/launch/single_drone_exploration.xml">
+      <arg name="drone_id" value="3"/>
+      <arg name="drone_num" value="$(arg racer_drone_num)"/>
+      <arg name="simulation" value="false"/>
+      <arg name="enable_trajectory_server" value="$(arg enable_trajectory_server)"/>
+      <arg name="odometry_topic" value="/racer/bot3/odom_world"/>
+      <arg name="sensor_pose_topic" value="/racer/bot3/lidar_pose"/>
+      <arg name="cloud_topic" value="/racer/bot3/cloud_world"/>
+      <arg name="depth_topic" value="/racer/disabled_depth"/>
+      <arg name="map_size_x" value="$(arg map_size_x)"/>
+      <arg name="map_size_y" value="$(arg map_size_y)"/>
+      <arg name="map_size_z" value="$(arg map_size_z)"/>
+      <arg name="map_resolution" value="$(arg map_resolution)"/>
+      <arg name="ground_height" value="$(arg ground_height)"/>
+      <arg name="box_min_x" value="$(arg box_min_x)"/>
+      <arg name="box_min_y" value="$(arg box_min_y)"/>
+      <arg name="box_min_z" value="$(arg box_min_z)"/>
+      <arg name="box_max_x" value="$(arg box_max_x)"/>
+      <arg name="box_max_y" value="$(arg box_max_y)"/>
+      <arg name="box_max_z" value="$(arg box_max_z)"/>
+      <arg name="obstacles_inflation" value="$(arg obstacles_inflation)"/>
+      <arg name="min_target_execution_time" value="$(arg min_target_execution_time)"/>
+      <arg name="partitioning_consistency_sign" value="$(arg partitioning_consistency_sign)"/>
+      <arg name="partitioning_first_grid_bonus" value="$(arg partitioning_first_grid_bonus)"/>
+      <arg name="replan_time" value="$(arg replan_time)"/>
+      <arg name="euclidean_inflation" value="$(arg euclidean_inflation)"/>
+      <arg name="use_measured_replan_start" value="$(arg use_measured_replan_start)"/>
+      <arg name="max_ray_length" value="$(arg max_ray_length)"/>
+      <arg name="virtual_ceil_height" value="$(arg virtual_ceil_height)"/>
+      <arg name="visualization_truncate_height" value="$(arg visualization_truncate_height)"/>
+      <arg name="frontier_cluster_min" value="$(arg frontier_cluster_min)"/>
+      <arg name="frontier_down_sample" value="$(arg frontier_down_sample)"/>
+      <arg name="frontier_min_visib_num" value="$(arg frontier_min_visib_num)"/>
+      <arg name="frontier_min_candidate_clearance" value="$(arg frontier_min_candidate_clearance)"/>
+      <arg name="frontier_wall_gap_max_cells" value="$(arg frontier_wall_gap_max_cells)"/>
+      <arg name="frontier_wall_gap_min_support_cells" value="$(arg frontier_wall_gap_min_support_cells)"/>
+      <arg name="partitioning_min_unknown" value="$(arg partitioning_min_unknown)"/>
+      <arg name="partitioning_min_frontier" value="$(arg partitioning_min_frontier)"/>
+      <arg name="partitioning_min_free" value="$(arg partitioning_min_free)"/>
+      <arg name="partitioning_grid_size" value="$(arg partitioning_grid_size)"/>
+      <arg name="partitioning_grid_size_z" value="$(arg partitioning_grid_size_z)"/>
+      <arg name="partitioning_split_known_ratio" value="$(arg partitioning_split_known_ratio)"/>
+      <arg name="partitioning_min_unknown_ratio" value="$(arg partitioning_min_unknown_ratio)"/>
+      <arg name="partitioning_require_frontier_for_relevance" value="$(arg partitioning_require_frontier_for_relevance)"/>
+      <arg name="partitioning_exclude_visited_without_frontier" value="$(arg partitioning_exclude_visited_without_frontier)"/>
+      <arg name="partitioning_max_exact_pair_grids" value="$(arg partitioning_max_exact_pair_grids)"/>
+      <arg name="partitioning_exact_drone_grid_dist" value="$(arg partitioning_exact_drone_grid_dist)"/>
+      <arg name="refined_num" value="$(arg refined_num)"/>
+      <arg name="top_view_num" value="$(arg top_view_num)"/>
+      <arg name="sensor_model" value="$(arg sensor_model)"/>
+      <arg name="min_translation_progress" value="$(arg min_translation_progress)"/>
+      <arg name="lidar_min_elevation" value="$(arg lidar_min_elevation)"/>
+      <arg name="lidar_max_elevation" value="$(arg lidar_max_elevation)"/>
+      <arg name="astar_max_search_time" value="$(arg astar_max_search_time)"/>
+      <arg name="kino_max_search_time" value="$(arg kino_max_search_time)"/>
+      <arg name="trigger_stagger" value="$(arg trigger_stagger)"/>
+      <arg name="pair_opt_timer_stagger" value="$(arg pair_opt_timer_stagger)"/>
+      <arg name="attempt_interval" value="$(arg attempt_interval)"/>
+      <arg name="pair_opt_interval" value="$(arg pair_opt_interval)"/>
+      <arg name="state_freshness" value="$(arg state_freshness)"/>
+      <arg name="frontier_update_interval" value="$(arg frontier_update_interval)"/>
+      <arg name="enable_planning_visualization" value="$(arg enable_planning_visualization)"/>
+      <arg name="max_vel" value="$(arg max_vel)"/>
+      <arg name="max_acc" value="$(arg max_acc)"/>
+    </include>
+  </group>
+
+  <group if="$(eval int(arg('uav_count')) &gt;= 4)">
+    <include file="$(find exploration_manager)/launch/single_drone_exploration.xml">
+      <arg name="drone_id" value="4"/>
+      <arg name="drone_num" value="$(arg racer_drone_num)"/>
+      <arg name="simulation" value="false"/>
+      <arg name="enable_trajectory_server" value="$(arg enable_trajectory_server)"/>
+      <arg name="odometry_topic" value="/racer/bot4/odom_world"/>
+      <arg name="sensor_pose_topic" value="/racer/bot4/lidar_pose"/>
+      <arg name="cloud_topic" value="/racer/bot4/cloud_world"/>
+      <arg name="depth_topic" value="/racer/disabled_depth"/>
+      <arg name="map_size_x" value="$(arg map_size_x)"/>
+      <arg name="map_size_y" value="$(arg map_size_y)"/>
+      <arg name="map_size_z" value="$(arg map_size_z)"/>
+      <arg name="map_resolution" value="$(arg map_resolution)"/>
+      <arg name="ground_height" value="$(arg ground_height)"/>
+      <arg name="box_min_x" value="$(arg box_min_x)"/>
+      <arg name="box_min_y" value="$(arg box_min_y)"/>
+      <arg name="box_min_z" value="$(arg box_min_z)"/>
+      <arg name="box_max_x" value="$(arg box_max_x)"/>
+      <arg name="box_max_y" value="$(arg box_max_y)"/>
+      <arg name="box_max_z" value="$(arg box_max_z)"/>
+      <arg name="obstacles_inflation" value="$(arg obstacles_inflation)"/>
+      <arg name="min_target_execution_time" value="$(arg min_target_execution_time)"/>
+      <arg name="partitioning_consistency_sign" value="$(arg partitioning_consistency_sign)"/>
+      <arg name="partitioning_first_grid_bonus" value="$(arg partitioning_first_grid_bonus)"/>
+      <arg name="replan_time" value="$(arg replan_time)"/>
+      <arg name="euclidean_inflation" value="$(arg euclidean_inflation)"/>
+      <arg name="use_measured_replan_start" value="$(arg use_measured_replan_start)"/>
+      <arg name="max_ray_length" value="$(arg max_ray_length)"/>
+      <arg name="virtual_ceil_height" value="$(arg virtual_ceil_height)"/>
+      <arg name="visualization_truncate_height" value="$(arg visualization_truncate_height)"/>
+      <arg name="frontier_cluster_min" value="$(arg frontier_cluster_min)"/>
+      <arg name="frontier_down_sample" value="$(arg frontier_down_sample)"/>
+      <arg name="frontier_min_visib_num" value="$(arg frontier_min_visib_num)"/>
+      <arg name="frontier_min_candidate_clearance" value="$(arg frontier_min_candidate_clearance)"/>
+      <arg name="frontier_wall_gap_max_cells" value="$(arg frontier_wall_gap_max_cells)"/>
+      <arg name="frontier_wall_gap_min_support_cells" value="$(arg frontier_wall_gap_min_support_cells)"/>
+      <arg name="partitioning_min_unknown" value="$(arg partitioning_min_unknown)"/>
+      <arg name="partitioning_min_frontier" value="$(arg partitioning_min_frontier)"/>
+      <arg name="partitioning_min_free" value="$(arg partitioning_min_free)"/>
+      <arg name="partitioning_grid_size" value="$(arg partitioning_grid_size)"/>
+      <arg name="partitioning_grid_size_z" value="$(arg partitioning_grid_size_z)"/>
+      <arg name="partitioning_split_known_ratio" value="$(arg partitioning_split_known_ratio)"/>
+      <arg name="partitioning_min_unknown_ratio" value="$(arg partitioning_min_unknown_ratio)"/>
+      <arg name="partitioning_require_frontier_for_relevance" value="$(arg partitioning_require_frontier_for_relevance)"/>
+      <arg name="partitioning_exclude_visited_without_frontier" value="$(arg partitioning_exclude_visited_without_frontier)"/>
+      <arg name="partitioning_max_exact_pair_grids" value="$(arg partitioning_max_exact_pair_grids)"/>
+      <arg name="partitioning_exact_drone_grid_dist" value="$(arg partitioning_exact_drone_grid_dist)"/>
+      <arg name="refined_num" value="$(arg refined_num)"/>
+      <arg name="top_view_num" value="$(arg top_view_num)"/>
+      <arg name="sensor_model" value="$(arg sensor_model)"/>
+      <arg name="min_translation_progress" value="$(arg min_translation_progress)"/>
+      <arg name="lidar_min_elevation" value="$(arg lidar_min_elevation)"/>
+      <arg name="lidar_max_elevation" value="$(arg lidar_max_elevation)"/>
+      <arg name="astar_max_search_time" value="$(arg astar_max_search_time)"/>
+      <arg name="kino_max_search_time" value="$(arg kino_max_search_time)"/>
+      <arg name="trigger_stagger" value="$(arg trigger_stagger)"/>
+      <arg name="pair_opt_timer_stagger" value="$(arg pair_opt_timer_stagger)"/>
+      <arg name="attempt_interval" value="$(arg attempt_interval)"/>
+      <arg name="pair_opt_interval" value="$(arg pair_opt_interval)"/>
+      <arg name="state_freshness" value="$(arg state_freshness)"/>
+      <arg name="frontier_update_interval" value="$(arg frontier_update_interval)"/>
+      <arg name="enable_planning_visualization" value="$(arg enable_planning_visualization)"/>
+      <arg name="max_vel" value="$(arg max_vel)"/>
+      <arg name="max_acc" value="$(arg max_acc)"/>
+    </include>
+  </group>
+
+  <group if="$(eval int(arg('uav_count')) &gt;= 5)">
+    <include file="$(find exploration_manager)/launch/single_drone_exploration.xml">
+      <arg name="drone_id" value="5"/>
+      <arg name="drone_num" value="$(arg racer_drone_num)"/>
+      <arg name="simulation" value="false"/>
+      <arg name="enable_trajectory_server" value="$(arg enable_trajectory_server)"/>
+      <arg name="odometry_topic" value="/racer/bot5/odom_world"/>
+      <arg name="sensor_pose_topic" value="/racer/bot5/lidar_pose"/>
+      <arg name="cloud_topic" value="/racer/bot5/cloud_world"/>
+      <arg name="depth_topic" value="/racer/disabled_depth"/>
+      <arg name="map_size_x" value="$(arg map_size_x)"/>
+      <arg name="map_size_y" value="$(arg map_size_y)"/>
+      <arg name="map_size_z" value="$(arg map_size_z)"/>
+      <arg name="map_resolution" value="$(arg map_resolution)"/>
+      <arg name="ground_height" value="$(arg ground_height)"/>
+      <arg name="box_min_x" value="$(arg box_min_x)"/>
+      <arg name="box_min_y" value="$(arg box_min_y)"/>
+      <arg name="box_min_z" value="$(arg box_min_z)"/>
+      <arg name="box_max_x" value="$(arg box_max_x)"/>
+      <arg name="box_max_y" value="$(arg box_max_y)"/>
+      <arg name="box_max_z" value="$(arg box_max_z)"/>
+      <arg name="obstacles_inflation" value="$(arg obstacles_inflation)"/>
+      <arg name="min_target_execution_time" value="$(arg min_target_execution_time)"/>
+      <arg name="partitioning_consistency_sign" value="$(arg partitioning_consistency_sign)"/>
+      <arg name="partitioning_first_grid_bonus" value="$(arg partitioning_first_grid_bonus)"/>
+      <arg name="replan_time" value="$(arg replan_time)"/>
+      <arg name="euclidean_inflation" value="$(arg euclidean_inflation)"/>
+      <arg name="use_measured_replan_start" value="$(arg use_measured_replan_start)"/>
+      <arg name="max_ray_length" value="$(arg max_ray_length)"/>
+      <arg name="virtual_ceil_height" value="$(arg virtual_ceil_height)"/>
+      <arg name="visualization_truncate_height" value="$(arg visualization_truncate_height)"/>
+      <arg name="frontier_cluster_min" value="$(arg frontier_cluster_min)"/>
+      <arg name="frontier_down_sample" value="$(arg frontier_down_sample)"/>
+      <arg name="frontier_min_visib_num" value="$(arg frontier_min_visib_num)"/>
+      <arg name="frontier_min_candidate_clearance" value="$(arg frontier_min_candidate_clearance)"/>
+      <arg name="frontier_wall_gap_max_cells" value="$(arg frontier_wall_gap_max_cells)"/>
+      <arg name="frontier_wall_gap_min_support_cells" value="$(arg frontier_wall_gap_min_support_cells)"/>
+      <arg name="partitioning_min_unknown" value="$(arg partitioning_min_unknown)"/>
+      <arg name="partitioning_min_frontier" value="$(arg partitioning_min_frontier)"/>
+      <arg name="partitioning_min_free" value="$(arg partitioning_min_free)"/>
+      <arg name="partitioning_grid_size" value="$(arg partitioning_grid_size)"/>
+      <arg name="partitioning_grid_size_z" value="$(arg partitioning_grid_size_z)"/>
+      <arg name="partitioning_split_known_ratio" value="$(arg partitioning_split_known_ratio)"/>
+      <arg name="partitioning_min_unknown_ratio" value="$(arg partitioning_min_unknown_ratio)"/>
+      <arg name="partitioning_require_frontier_for_relevance" value="$(arg partitioning_require_frontier_for_relevance)"/>
+      <arg name="partitioning_exclude_visited_without_frontier" value="$(arg partitioning_exclude_visited_without_frontier)"/>
+      <arg name="partitioning_max_exact_pair_grids" value="$(arg partitioning_max_exact_pair_grids)"/>
+      <arg name="partitioning_exact_drone_grid_dist" value="$(arg partitioning_exact_drone_grid_dist)"/>
+      <arg name="refined_num" value="$(arg refined_num)"/>
+      <arg name="top_view_num" value="$(arg top_view_num)"/>
+      <arg name="sensor_model" value="$(arg sensor_model)"/>
+      <arg name="min_translation_progress" value="$(arg min_translation_progress)"/>
+      <arg name="lidar_min_elevation" value="$(arg lidar_min_elevation)"/>
+      <arg name="lidar_max_elevation" value="$(arg lidar_max_elevation)"/>
+      <arg name="astar_max_search_time" value="$(arg astar_max_search_time)"/>
+      <arg name="kino_max_search_time" value="$(arg kino_max_search_time)"/>
+      <arg name="trigger_stagger" value="$(arg trigger_stagger)"/>
+      <arg name="pair_opt_timer_stagger" value="$(arg pair_opt_timer_stagger)"/>
+      <arg name="attempt_interval" value="$(arg attempt_interval)"/>
+      <arg name="pair_opt_interval" value="$(arg pair_opt_interval)"/>
+      <arg name="state_freshness" value="$(arg state_freshness)"/>
+      <arg name="frontier_update_interval" value="$(arg frontier_update_interval)"/>
+      <arg name="enable_planning_visualization" value="$(arg enable_planning_visualization)"/>
+      <arg name="max_vel" value="$(arg max_vel)"/>
+      <arg name="max_acc" value="$(arg max_acc)"/>
+    </include>
+  </group>
+
+  <group if="$(eval int(arg('uav_count')) &gt;= 6)">
+    <include file="$(find exploration_manager)/launch/single_drone_exploration.xml">
+      <arg name="drone_id" value="6"/>
+      <arg name="drone_num" value="$(arg racer_drone_num)"/>
+      <arg name="simulation" value="false"/>
+      <arg name="enable_trajectory_server" value="$(arg enable_trajectory_server)"/>
+      <arg name="odometry_topic" value="/racer/bot6/odom_world"/>
+      <arg name="sensor_pose_topic" value="/racer/bot6/lidar_pose"/>
+      <arg name="cloud_topic" value="/racer/bot6/cloud_world"/>
+      <arg name="depth_topic" value="/racer/disabled_depth"/>
+      <arg name="map_size_x" value="$(arg map_size_x)"/>
+      <arg name="map_size_y" value="$(arg map_size_y)"/>
+      <arg name="map_size_z" value="$(arg map_size_z)"/>
+      <arg name="map_resolution" value="$(arg map_resolution)"/>
+      <arg name="ground_height" value="$(arg ground_height)"/>
+      <arg name="box_min_x" value="$(arg box_min_x)"/>
+      <arg name="box_min_y" value="$(arg box_min_y)"/>
+      <arg name="box_min_z" value="$(arg box_min_z)"/>
+      <arg name="box_max_x" value="$(arg box_max_x)"/>
+      <arg name="box_max_y" value="$(arg box_max_y)"/>
+      <arg name="box_max_z" value="$(arg box_max_z)"/>
+      <arg name="obstacles_inflation" value="$(arg obstacles_inflation)"/>
+      <arg name="min_target_execution_time" value="$(arg min_target_execution_time)"/>
+      <arg name="partitioning_consistency_sign" value="$(arg partitioning_consistency_sign)"/>
+      <arg name="partitioning_first_grid_bonus" value="$(arg partitioning_first_grid_bonus)"/>
+      <arg name="replan_time" value="$(arg replan_time)"/>
+      <arg name="euclidean_inflation" value="$(arg euclidean_inflation)"/>
+      <arg name="use_measured_replan_start" value="$(arg use_measured_replan_start)"/>
+      <arg name="max_ray_length" value="$(arg max_ray_length)"/>
+      <arg name="virtual_ceil_height" value="$(arg virtual_ceil_height)"/>
+      <arg name="visualization_truncate_height" value="$(arg visualization_truncate_height)"/>
+      <arg name="frontier_cluster_min" value="$(arg frontier_cluster_min)"/>
+      <arg name="frontier_down_sample" value="$(arg frontier_down_sample)"/>
+      <arg name="frontier_min_visib_num" value="$(arg frontier_min_visib_num)"/>
+      <arg name="frontier_min_candidate_clearance" value="$(arg frontier_min_candidate_clearance)"/>
+      <arg name="frontier_wall_gap_max_cells" value="$(arg frontier_wall_gap_max_cells)"/>
+      <arg name="frontier_wall_gap_min_support_cells" value="$(arg frontier_wall_gap_min_support_cells)"/>
+      <arg name="partitioning_min_unknown" value="$(arg partitioning_min_unknown)"/>
+      <arg name="partitioning_min_frontier" value="$(arg partitioning_min_frontier)"/>
+      <arg name="partitioning_min_free" value="$(arg partitioning_min_free)"/>
+      <arg name="partitioning_grid_size" value="$(arg partitioning_grid_size)"/>
+      <arg name="partitioning_grid_size_z" value="$(arg partitioning_grid_size_z)"/>
+      <arg name="partitioning_split_known_ratio" value="$(arg partitioning_split_known_ratio)"/>
+      <arg name="partitioning_min_unknown_ratio" value="$(arg partitioning_min_unknown_ratio)"/>
+      <arg name="partitioning_require_frontier_for_relevance" value="$(arg partitioning_require_frontier_for_relevance)"/>
+      <arg name="partitioning_exclude_visited_without_frontier" value="$(arg partitioning_exclude_visited_without_frontier)"/>
+      <arg name="partitioning_max_exact_pair_grids" value="$(arg partitioning_max_exact_pair_grids)"/>
+      <arg name="partitioning_exact_drone_grid_dist" value="$(arg partitioning_exact_drone_grid_dist)"/>
+      <arg name="refined_num" value="$(arg refined_num)"/>
+      <arg name="top_view_num" value="$(arg top_view_num)"/>
+      <arg name="sensor_model" value="$(arg sensor_model)"/>
+      <arg name="min_translation_progress" value="$(arg min_translation_progress)"/>
+      <arg name="lidar_min_elevation" value="$(arg lidar_min_elevation)"/>
+      <arg name="lidar_max_elevation" value="$(arg lidar_max_elevation)"/>
+      <arg name="astar_max_search_time" value="$(arg astar_max_search_time)"/>
+      <arg name="kino_max_search_time" value="$(arg kino_max_search_time)"/>
+      <arg name="trigger_stagger" value="$(arg trigger_stagger)"/>
+      <arg name="pair_opt_timer_stagger" value="$(arg pair_opt_timer_stagger)"/>
+      <arg name="attempt_interval" value="$(arg attempt_interval)"/>
+      <arg name="pair_opt_interval" value="$(arg pair_opt_interval)"/>
+      <arg name="state_freshness" value="$(arg state_freshness)"/>
+      <arg name="frontier_update_interval" value="$(arg frontier_update_interval)"/>
+      <arg name="enable_planning_visualization" value="$(arg enable_planning_visualization)"/>
+      <arg name="max_vel" value="$(arg max_vel)"/>
+      <arg name="max_acc" value="$(arg max_acc)"/>
+    </include>
+  </group>
+</launch>

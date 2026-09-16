@@ -1,0 +1,58 @@
+{
+  "reference_result": {
+    "name": "run1_700s_v128",
+    "source_path_on_origin_host": "artifacts/legged_go2_dual/atrium/run1_700s_v128",
+    "requested_duration_sim_s": 700.0,
+    "recorded_duration_sim_s": 699.8975,
+    "observed_navigable_fraction": 1.0,
+    "observed_navigable_area_m2": 4406.5,
+    "total_planar_distance_m": 893.7523698504808,
+    "inter_robot_collision_samples": 0,
+    "emergency_stop_triggered": false
+  },
+  "docker_images": {
+    "legged_gazebo": {
+      "local_reference": "fishbot_multirobot_sim-legged:run1-v128-historical",
+      "local_image_id": "sha256:d7d348ff3aca68ca87e2b315e85f508a97b1de26c9cc70ac9949a3947cf454d9",
+      "created": "2026-08-31T03:19:34.469948365+08:00",
+      "role": "historical Go2 and Gazebo runtime with working retro-reflector returns"
+    },
+    "racer_ros1": {
+      "local_reference": "fishbot_multirobot_sim-racer_ros1:v128-dual-first-grid-bonus",
+      "local_image_id": "sha256:c5a4f8141a96853b1df2f4050ff9fa3c23adf8e3509790734457970e2630d0b1",
+      "created": "2026-09-05T22:29:17.432761472+08:00",
+      "role": "RACER v128 with per-vehicle first-grid bonus"
+    },
+    "swarm_lio2_ros2": {
+      "local_reference": "swarm-lio2-ros2:run1-v128-validated",
+      "local_image_id": "sha256:f4f401762c2436a31b0bf4b30e6ec8bbee9abe05443f19f19f7ccaa06bc92046",
+      "created": "2026-09-14T13:13:49.644263421+08:00",
+      "role": "source-compatible runtime validated in the 2026-09-16 rerun",
+      "identity_note": "The original run did not preserve an independently identifiable Swarm-LIO2 image digest. This is a validated replacement, not a bit-identical claim."
+    }
+  },
+  "upstream_source": {
+    "racer": {
+      "url": "https://github.com/Robotics-STAR-Lab/RACER.git",
+      "base_commit": "433a06c26020036657354d4ae3312a05145a3bae",
+      "snapshot_note": "The repository contains the complete modified working tree extracted from the v128 Docker image."
+    },
+    "swarm_lio2_ros2": {
+      "url": "https://github.com/V-Roman-V/Swarm-LIO2-ROS2-Docker.git",
+      "base_commit": "6b58e02cc310c38308d178a66f320d14af365ebc",
+      "snapshot_note": "The repository contains the modified working tree used by the validated rerun."
+    },
+    "quadruped_ros2_control": {
+      "url": "https://github.com/legubiao/quadruped_ros2_control",
+      "snapshot_note": "Required packages and the HIMLoco policy are vendored under src/legged/qrc with local Fortress and namespacing adaptations."
+    }
+  },
+  "critical_file_sha256": {
+    "himloco.pt": "d9945f85a39944aaf241a67f7d2b25a15326a0222d0e503aeb05a7f188430509",
+    "go2_mid360.xacro": "190fd38bab86db13c09747c7dca53a5440739b3fe20e7d1df35a761d917c0a3a",
+    "swarm_lio_laserMapping.cpp": "56d5ce211c2c154e141c4c27c82c083c99f83d133cb6d1a78778b8d1da5e72f7",
+    "racer_hgrid.cpp": "ba9c08f44df6c5ee990ff2beeb37629855613d3626b1b6a8e5ea29e36b36c2d3",
+    "ros2_racer_controller.py": "7a6bfdecea67dd93c95b6712a980182a2587133cc9a9dbb4b433fb876f07ef67",
+    "run_ros1_stack.sh": "f1a791ae2b0249fff2d15a4c166a7b9217fa04c88042e2216347df36969c9524"
+  }
+}

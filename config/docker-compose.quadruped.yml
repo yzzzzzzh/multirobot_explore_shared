@@ -1,0 +1,131 @@
+# Two planar quadrupeds running the same Swarm-LIO2 -> RACER integration.
+#
+# The selected world and spawn list can be changed without editing the file:
+#   QUADRUPED_WORLD=teaching_building_atrium.world
+#   QUADRUPED_SPAWN_POSES='[[-1.5,0,0.36,0],[1.5,0,0.36,0]]'
+services:
+  gazebo:
+    command: >
+      bash -lc "ln -sf /fishbot_ws/src/gazebo_sim/worlds/${QUADRUPED_WORLD:-teaching_building_corridor.world} /fishbot_ws/install/share/gazebo_sim/worlds/${QUADRUPED_WORLD:-teaching_building_corridor.world};
+        ln -sfn /fishbot_ws/src/gazebo_sim/robots/quadruped_mid360 /fishbot_ws/install/share/gazebo_sim/robots/quadruped_mid360;
+        export SPAWN_POSES='${QUADRUPED_SPAWN_POSES:-[[0.0,-1.5,0.36,0.0],[0.0,1.5,0.36,0.0]]}';
+        ros2 launch gazebo_sim quick.launch.py world:=${QUADRUPED_WORLD:-teaching_building_corridor.world} headless:=true robot:=quadruped_mid360 pattern:=custom count:=2 start_index:=1"
+
+  racer_ros1:
+    environment:
+      RACER_BOTS: "1,2"
+      RACER_ENABLE_TRAJECTORY_SERVER: "true"
+      RACER_AUTO_TRIGGER: "true"
+      RACER_MAP_WARMUP_SECONDS: "8"
+      RACER_PLANNER_MAX_VEL: "${RACER_PLANNER_MAX_VEL:-0.8}"
+      RACER_PLANNER_MAX_ACC: "${RACER_PLANNER_MAX_ACC:-0.6}"
+      RACER_MAP_SIZE_X: "102.0"
+      RACER_MAP_SIZE_Y: "52.0"
+      # A single z voxel makes RACER's occupancy, frontier, HGrid and A*
+      # computations genuinely planar while Swarm-LIO2 remains full SE(3).
+      RACER_MAP_SIZE_Z: "0.25"
+      RACER_MAP_RESOLUTION: "0.25"
+      RACER_GROUND_HEIGHT: "0.50"
+      RACER_BOX_MIN_X: "-50.0"
+      RACER_BOX_MIN_Y: "-25.0"
+      RACER_BOX_MIN_Z: "0.50"
+      RACER_BOX_MAX_X: "50.0"
+      RACER_BOX_MAX_Y: "25.0"
+      RACER_BOX_MAX_Z: "0.75"
+      # The conservative evaluation radius is 0.55 m.  The jamb-to-jamb
+      # opening is 1.46 m, so inflation must stay below 0.73 m or A* seals
+      # every classroom door.  0.60 m preserves a narrow feasible centre band
+      # while the raw-LiDAR controller supplies the speed-dependent margin.
+      # Overridable per world.  0.60 m is the corridor-world value (1.46 m
+      # doors); the atrium world (4 m openings) runs 0.85 m so planned paths
+      # already satisfy the controller's 0.90 m raw-LiDAR protected clearance
+      # instead of crawling along walls at 0.07 m/s.
+      RACER_OBSTACLES_INFLATION: "${RACER_OBSTACLES_INFLATION:-0.60}"
+      # Use the circular ground footprint. The upstream cube inflation is
+      # retained for UAV runs and would overinflate a 0.60 m radius to a
+      # 1.06 m diagonal at this map resolution.
+      RACER_EUCLIDEAN_INFLATION: "true"
+      RACER_USE_MEASURED_REPLAN_START: "true"
+      RACER_MAX_RAY_LENGTH: "10.0"
+      RACER_VIRTUAL_CEIL_HEIGHT: "0.74"
+      RACER_VISUALIZATION_HEIGHT: "0.75"
+      # Keep RACER's official 0.21 m viewpoint-to-unknown clearance.
+      # cluster_min is a cell count: on the one-voxel-high planar map a
+      # frontier is a 1-D curve, so 30 cells meant 7.5 m of continuous
+      # boundary and every partially observed fragment was discarded (v101:
+      # frontier count 0 while real free/unknown boundaries existed).  6 cells
+      # = 1.5 m of boundary.
+      RACER_FRONTIER_MIN_CANDIDATE_CLEARANCE: "0.21"
+      RACER_FRONTIER_CLUSTER_MIN: "6"
+      RACER_FRONTIER_MIN_VISIB_NUM: "5"
+      # Planner-only wall mask: every occupied voxel is dilated by a 5x5 XY
+      # window (radius 2 cells = 0.50 m).  Frontier cells and unknown-gain
+      # rays within that band of a wall are ignored.  Note: a 1.46 m door keeps
+      # a 0.46 m unmasked centre band; the 4 m atrium openings are unaffected.
+      RACER_FRONTIER_WALL_GAP_MAX_CELLS: "2"
+      RACER_FRONTIER_WALL_GAP_MIN_SUPPORT_CELLS: "1"
+      # A 10 m coarse cell follows the classroom/corridor topology better than
+      # RACER's 20 m open-volume default and is still cheap for a 100 x 50 m
+      # planar map (50 coarse tasks before adaptive subdivision).
+      RACER_PARTITIONING_GRID_SIZE: "10.0"
+      # Non-positive z size selects RACER's XY-column HGrid. With the
+      # one-voxel-high map this produces one task layer at both HGrid levels.
+      RACER_PARTITIONING_GRID_SIZE_Z: "-1.0"
+      # Keep any high-unknown HGrid until this robot has physically entered
+      # it. After a visit, retain it only while it still contains an accepted
+      # frontier cluster. This lets CVRP route toward unseen distant cells
+      # without revisiting locally exhausted, wall-occluded cells forever.
+      RACER_PARTITIONING_MIN_UNKNOWN_RATIO: "${RACER_PARTITIONING_MIN_UNKNOWN_RATIO:-0.05}"
+      RACER_EXACT_DRONE_GRID_DIST: "${RACER_EXACT_DRONE_GRID_DIST:-15.0}"
+      RACER_PARTITIONING_REQUIRE_FRONTIER: "false"
+      RACER_PARTITIONING_EXCLUDE_VISITED_NO_FRONTIER: "true"
+      # Local kinodynamic A* only. HGrid/CVRP geometric A* remains at 20 ms.
+      RACER_KINO_MAX_SEARCH_TIME: "1.0"
+      RACER_SENSOR_MODEL: "lidar_3d"
+      RACER_LIDAR_MIN_ELEVATION: "-0.02"
+      RACER_LIDAR_MAX_ELEVATION: "0.02"
+      # The planar A* lattice advances in 0.20 m steps.  Accept one complete
+      # edge so a known-boundary recovery is executable, while still rejecting
+      # the 0.04--0.14 m degenerate viewpoints seen in failed runs.
+      RACER_MIN_TRANSLATION_PROGRESS: "0.18"
+
+  swarm_lio2:
+    environment:
+      RACER_BOTS: "1,2"
+      RACER_ADAPTER_CONFIG: ${RACER_ADAPTER_CONFIG:-racer_adapter_quadruped.yaml}
+      SWARM_FORCE_UAV_NUM: "2"
+      # Swarm-LIO2 teammate constraints are LiDAR-derived.  They remain active
+      # behind the strict residual/attitude gates in simulation.yaml; no
+      # Gazebo truth, visual or UWB measurement enters the estimator.
+      SWARM_ENABLE_MUTUAL_OBSERVATION_UPDATE: "true"
+    command: >
+      bash -lc "
+        set -e
+        source /opt/ros/humble/setup.bash
+        cd /opt/swarm_lio_ws
+        colcon build --packages-select swarm_lio racer_adapter --cmake-args -DCMAKE_BUILD_TYPE=Release
+        source install/setup.bash
+        ros2 launch swarm_lio simulation.launch.py bot_list:=1,2 rviz_list:=none use_sim_time:=true ground_truth_logging_en:=false cluster_size_thresh:=1.2 enable_mutual_observation_update:=${SWARM_MUTUAL_OBS:-true} force_uav_num:=2 cross_world_transform_mode:=se3 gravity_constrained_extrinsic_rotation:=true max_abs_match_yaw_deg:=3.0 traj_matching_start_thresh:=1.0 traj_matching_time_tolerance:=0.06 ave_match_error_thresh:=${SWARM_MATCH_ERR:-0.17} temp_tracker_lost_timeout:=8.0 valid_temp_cluster_dist_thresh:=1.2 use_raw_temp_measurement_for_traj_matching:=true trajectory_samples_require_measurement:=true stop_tracking_after_bootstrap:=false enable_mutual_observation_update:=true planar_odom_prior_en:=true point_filter_num:=2 filter_size_surf:=0.2 filter_size_map:=0.3 pcd_save_en:=false local_map_pub_en:=false &
+        ros2 launch racer_adapter racer_frame_adapter.launch.py config:=/opt/swarm_lio_ws/install/racer_adapter/share/racer_adapter/config/$${RACER_ADAPTER_CONFIG} &
+        exec /usr/bin/python3 /racer_integration/ros2_racer_gateway.py --bots 1,2 --host 127.0.0.1 --port 47100 --planar-no-return-rays --raw-lidar-range 10.0 --raw-lidar-horizontal-min -3.14159 --raw-lidar-horizontal-max 3.14159 --raw-lidar-vertical-min -0.126 --raw-lidar-vertical-max 0.907 --raw-lidar-target-elevation 0.0 --raw-lidar-max-range-margin 0.05 --raw-lidar-match-tolerance 0.12 --ros-args -p use_sim_time:=true
+      "
+
+  racer_controller:
+    environment:
+      RACER_BOTS: "1,2"
+      RACER_MAX_HORIZONTAL_SPEED: "${RACER_PLANNER_MAX_VEL:-0.8}"
+      RACER_MAX_VERTICAL_SPEED: "0.0"
+      RACER_TRACK_RACER_YAW: "false"
+      RACER_BOOTSTRAP_ROOT_ONLY: "true"
+      RACER_BOOTSTRAP_RADII: "[0.9]"
+      RACER_BOOTSTRAP_DIRECTIONS: "[0.0]"
+      RACER_SEPARATION_ACTIVATION_DISTANCE: "2.5"
+      RACER_SEPARATION_HARD_DISTANCE: "1.4"
+      RACER_SEPARATION_REPULSION_SPEED: "0.8"
+    command: >
+      bash -lc "
+        set -e
+        source /opt/ros/humble/setup.bash
+        source /opt/swarm_lio_ws/install/setup.bash
+        exec /usr/bin/python3 /racer_integration/ros2_racer_controller.py --bots 1,2 --ros-args -p use_sim_time:=true -p platform_mode:=ground_unicycle -p max_horizontal_speed:=${RACER_PLANNER_MAX_VEL:-0.8} -p max_vertical_speed:=0.0 -p max_yaw_rate:=1.2 -p max_command_acceleration:=${RACER_PLANNER_MAX_ACC:-0.6} -p ground_heading_kp:=2.2 -p ground_turn_in_place_angle_deg:=35.0 -p ground_obstacle_z_min:=${RACER_GROUND_OBSTACLE_Z_MIN:--0.10} -p ground_obstacle_z_max:=0.60 -p command_timeout:=1.0 -p odom_timeout:=1.5 -p attitude_timeout:=1.0 -p require_safety_monitor:=true -p bounds_lower:='[-50.0,-25.0,0.0]' -p bounds_upper:='[50.0,25.0,3.0]' -p bootstrap_root_only:=true -p bootstrap_radii:='[${RACER_BOOTSTRAP_RADIUS:-1.2}]' -p bootstrap_directions_deg:='[${RACER_BOOTSTRAP_DIRECTION_DEG:-0.0}]' -p bootstrap_ground_lateral_scale:=${RACER_BOOTSTRAP_LATERAL_SCALE:-0.375} -p bootstrap_loop_seconds:=${RACER_BOOTSTRAP_LOOP_SECONDS:-16.0} -p bootstrap_min_excitation_seconds:=${RACER_BOOTSTRAP_MIN_EXCITATION:-0.0} -p bootstrap_climb_height:=0.0 -p bootstrap_vertical_amplitude:=0.0 -p separation_activation_distance:=2.5 -p separation_hard_distance:=1.4 -p separation_repulsion_speed:=0.8 -p lidar_point_stride:=1 -p lidar_to_body_z:=${RACER_LIDAR_TO_BODY_Z:-0.29} -p lidar_self_filter_radius:=${RACER_LIDAR_SELF_FILTER_RADIUS:-0.20} -p lidar_self_filter_z_min:=-0.50 -p lidar_self_filter_z_max:=0.50 -p obstacle_corridor_radius:=0.58 -p obstacle_hard_clearance:=${RACER_OBSTACLE_HARD_CLEARANCE:-0.65} -p obstacle_braking_margin:=${RACER_OBSTACLE_BRAKING_MARGIN:-0.25} -p obstacle_deceleration:=0.60 -p obstacle_repulsion_activation:=1.05 -p obstacle_repulsion_speed:=0.8
+      "

@@ -1,0 +1,130 @@
+{
+  "cloud_bounds_xyz": {
+    "lower": [
+      -50.0,
+      -25.0,
+      0.0
+    ],
+    "upper": [
+      50.0,
+      25.0,
+      1.0
+    ]
+  },
+  "collision_envelope": {
+    "body_height_m": 0.13,
+    "xy_radius_m": 0.356
+  },
+  "duration_basis": "sim",
+  "duration_sim_s": 699.8975,
+  "duration_wall_s": 1294.8474144469947,
+  "emergency_stop_triggered": false,
+  "inter_uav_clearance": {
+    "bot1-bot2": {
+      "contact_detected": false,
+      "contact_samples": 0,
+      "first_contact_wall_s": null,
+      "min_3d_m": 6.410548170937776,
+      "min_horizontal_m": 6.410509547581565,
+      "vertical_at_min_horizontal_m": 0.022252916197106787
+    }
+  },
+  "map_voxel_size_m": 0.25,
+  "mapped_surface_voxels": 717,
+  "mapped_surface_voxels_per_gt_meter": 0.8019956974712779,
+  "mapped_surface_voxels_per_wall_s": 0.553733194691694,
+  "monitor_warnings": [],
+  "platform": "quadruped",
+  "ready_seen": true,
+  "requested_duration_s": 700.0,
+  "robot_ids": [
+    1,
+    2
+  ],
+  "robots": {
+    "bot1": {
+      "first_pose_se3": {
+        "ate_rmse_m": 1.6886244648545954,
+        "max_error_m": 3.010035045705304,
+        "mean_error_m": 1.580520304323687,
+        "mean_signed_error_xyz_m": [
+          0.5365978448256966,
+          0.21202434322647445,
+          -1.426160604535254
+        ],
+        "samples": 2468
+      },
+      "ground_truth_distance_m": 446.4920758944816,
+      "root_trajectory_se3": {
+        "alignment_valid": true,
+        "ate_rmse_m": 0.25237231610235694,
+        "max_error_m": 0.5954250241017116,
+        "mean_error_m": 0.21914352312539465,
+        "mean_signed_error_xyz_m": [
+          4.802209413483983e-15,
+          -5.90300363965041e-14,
+          2.704211786965829e-14
+        ],
+        "samples": 2468
+      },
+      "slam_validity": {
+        "final_valid": true,
+        "invalid_or_missing_samples": 0,
+        "transitions": 0,
+        "valid_fraction": 1.0,
+        "valid_samples": 12506
+      },
+      "wheel_odom_first_pose_se2": {
+        "samples": 0
+      }
+    },
+    "bot2": {
+      "first_pose_se3": {
+        "ate_rmse_m": 1.7210225077564258,
+        "max_error_m": 3.4395689785277757,
+        "mean_error_m": 1.5872656882028797,
+        "mean_signed_error_xyz_m": [
+          -0.42804399121593667,
+          0.006528842479758453,
+          1.4916353783310534
+        ],
+        "samples": 2667
+      },
+      "ground_truth_distance_m": 447.52768289066853,
+      "root_trajectory_se3": {
+        "alignment_valid": true,
+        "ate_rmse_m": 0.9834582114608801,
+        "max_error_m": 1.2028365097493336,
+        "mean_error_m": 0.9687770513977986,
+        "mean_signed_error_xyz_m": [
+          -0.7143581584844534,
+          0.599544149186192,
+          0.006054128465955379
+        ],
+        "samples": 2667
+      },
+      "slam_validity": {
+        "final_valid": true,
+        "invalid_or_missing_samples": 0,
+        "transitions": 0,
+        "valid_fraction": 1.0,
+        "valid_samples": 12506
+      },
+      "wheel_odom_first_pose_se2": {
+        "samples": 0
+      }
+    }
+  },
+  "root_trajectory_alignment": {
+    "reason": "full-SE(3) Kabsch fit",
+    "root_distance_m": 446.4920758944816,
+    "root_rms_excitation_m": 19.27970373574531,
+    "valid": true
+  },
+  "stop_on_divergence": false,
+  "total_ground_truth_distance_m": 894.0197587851501,
+  "tracking_seen": {
+    "bot1": true,
+    "bot2": true
+  }
+}

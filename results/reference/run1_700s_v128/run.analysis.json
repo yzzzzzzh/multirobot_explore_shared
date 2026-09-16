@@ -1,0 +1,335 @@
+{
+  "allocation": {
+    "acceptance_fraction": 0.8024691358024691,
+    "accepted": 65,
+    "accepted_makespan_gain_fraction": {
+      "count": 65,
+      "max": 0.5551135033934004,
+      "mean": 0.022511702578090435,
+      "median": 0.006105507797202082,
+      "p90": 0.138055857897867,
+      "p95": 0.2967001103263586
+    },
+    "attempts": 81,
+    "by_reason": {
+      "baseline_recovery": {
+        "accepted": 6,
+        "attempts": 6,
+        "wall_ms": {
+          "count": 6,
+          "max": 626.027,
+          "mean": 446.39616666666666,
+          "median": 542.417,
+          "p90": 626.027,
+          "p95": 626.027
+        }
+      },
+      "official_sum": {
+        "accepted": 35,
+        "attempts": 35,
+        "wall_ms": {
+          "count": 35,
+          "max": 1315.332,
+          "mean": 253.54957142857143,
+          "median": 211.968,
+          "p90": 445.34,
+          "p95": 505.564
+        }
+      },
+      "recovery_missed": {
+        "accepted": 23,
+        "attempts": 23,
+        "wall_ms": {
+          "count": 23,
+          "max": 2075.746,
+          "mean": 437.8059565217391,
+          "median": 374.473,
+          "p90": 744.071,
+          "p95": 766.105
+        }
+      },
+      "rejected": {
+        "accepted": 0,
+        "attempts": 14,
+        "wall_ms": {
+          "count": 14,
+          "max": 490.999,
+          "mean": 227.7347142857143,
+          "median": 282.8395,
+          "p90": 468.539,
+          "p95": 490.999
+        }
+      },
+      "reshuffle_rejected": {
+        "accepted": 0,
+        "attempts": 2,
+        "wall_ms": {
+          "count": 2,
+          "max": 449.416,
+          "mean": 376.85699999999997,
+          "median": 376.85699999999997,
+          "p90": 449.416,
+          "p95": 449.416
+        }
+      },
+      "seed": {
+        "accepted": 1,
+        "attempts": 1,
+        "wall_ms": {
+          "count": 1,
+          "max": 117.428,
+          "mean": 117.428,
+          "median": 117.428,
+          "p90": 117.428,
+          "p95": 117.428
+        }
+      }
+    },
+    "comparable_accepted_makespan_gain_fraction": {
+      "count": 41,
+      "max": 0.5551135033934004,
+      "mean": -0.002404798294792052,
+      "median": 0.004579180509413057,
+      "p90": 0.09058615391778013,
+      "p95": 0.2967001103263586
+    },
+    "reasons": {
+      "baseline_recovery": 6,
+      "official_sum": 35,
+      "recovery_missed": 23,
+      "rejected": 14,
+      "reshuffle_rejected": 2,
+      "seed": 1
+    },
+    "wall_ms": {
+      "count": 81,
+      "max": 2075.746,
+      "mean": 317.05650617283953,
+      "median": 291.363,
+      "p90": 598.479,
+      "p95": 651.728
+    }
+  },
+  "astar_failure_count": 0,
+  "astar_timeout_retry_count": 0,
+  "contact_detected": false,
+  "duration_sim_s": 699.8975,
+  "duration_wall_s": 1294.8474144469947,
+  "emergency_stop_triggered": false,
+  "execution_blocked_local_retry_count": 0,
+  "execution_blocked_replan_count": 0,
+  "known_boundary_advance_count": 3,
+  "known_path_budget_recovery_count": 0,
+  "mapped_surface_voxels": 717,
+  "minimum_inter_uav_3d_m": 6.410548170937776,
+  "monitor_warnings": [],
+  "motion": {
+    "bot1": {
+      "confinement_diameter_m": 2.5,
+      "distance_m": 446.4921232537541,
+      "duration_s": 698.0999731421471,
+      "last_60s_displacement_m": 3.2298362275580026e-05,
+      "longest_confined_s": 256.9999694824219,
+      "longest_stationary_s": 250.29998779296875,
+      "mean_speed_mps": 0.6395819229788731,
+      "motion_fraction": 0.5042561815970815,
+      "samples": 2468,
+      "smoothing_window_s": 2.0,
+      "stationary_speed_threshold_mps": 0.08
+    },
+    "bot2": {
+      "confinement_diameter_m": 2.5,
+      "distance_m": 447.52770154176164,
+      "duration_s": 699.4000219702721,
+      "last_60s_displacement_m": 1.3915897577320603e-05,
+      "longest_confined_s": 241.30001831054688,
+      "longest_stationary_s": 233.4000244140625,
+      "mean_speed_mps": 0.6398737310316868,
+      "motion_fraction": 0.5393848462115529,
+      "samples": 2667,
+      "smoothing_window_s": 2.0,
+      "stationary_speed_threshold_mps": 0.08
+    }
+  },
+  "one_point_hover_count": 0,
+  "ownership_duplicate_resolution_count": 13,
+  "planner_abort_count": 0,
+  "planning": {
+    "by_drone": {
+      "bot1": {
+        "count": 225,
+        "frequency_hz": 0.49778330870232385,
+        "results": {
+          "2": 218,
+          "3": 7
+        },
+        "wall_ms": {
+          "count": 225,
+          "max": 421.986,
+          "mean": 48.055617777777776,
+          "median": 4.354,
+          "p90": 152.568,
+          "p95": 324.614
+        }
+      },
+      "bot2": {
+        "count": 257,
+        "frequency_hz": 0.5604080471093015,
+        "results": {
+          "2": 254,
+          "3": 3
+        },
+        "wall_ms": {
+          "count": 257,
+          "max": 806.327,
+          "mean": 267.3803190661479,
+          "median": 34.896,
+          "p90": 787.518,
+          "p95": 794.056
+        }
+      }
+    },
+    "first_plan_sim_s": 186.512,
+    "frontier_tour": {
+      "count": 121,
+      "max": 88.404,
+      "mean": 11.134231404958678,
+      "median": 0.98,
+      "p90": 29.543,
+      "p95": 81.078
+    },
+    "frontier_update": {
+      "count": 527,
+      "max": 548.994,
+      "mean": 11.893259962049337,
+      "median": 1.103,
+      "p90": 15.719,
+      "p95": 34.381
+    },
+    "full_plan": {
+      "count": 230,
+      "max": 806.281,
+      "mean": 339.7609043478261,
+      "median": 274.274,
+      "p90": 787.514,
+      "p95": 794.894
+    },
+    "grid_tour": {
+      "count": 282,
+      "max": 784.14,
+      "mean": 260.4476241134752,
+      "median": 97.857,
+      "p90": 760.308,
+      "p95": 767.648
+    },
+    "local_traj": {
+      "count": 472,
+      "max": 88.215,
+      "mean": 9.384800847457628,
+      "median": 2.8885,
+      "p90": 27.456,
+      "p95": 31.876
+    },
+    "plan": {
+      "count": 482,
+      "max": 806.327,
+      "mean": 164.99845643153526,
+      "median": 8.989,
+      "p90": 655.544,
+      "p95": 787.531
+    },
+    "route": {
+      "count": 230,
+      "max": 784.189,
+      "mean": 316.62015652173915,
+      "median": 238.26,
+      "p90": 762.195,
+      "p95": 769.54
+    },
+    "viewpoint_evaluation": {
+      "count": 527,
+      "max": 56.084,
+      "mean": 2.91876660341556,
+      "median": 0.33,
+      "p90": 11.06,
+      "p95": 16.737
+    }
+  },
+  "quarantined_grid_count": 0,
+  "reachability_deferred_count": 1,
+  "released_unreachable_grid_count": 0,
+  "rtf": 0.5405250782378195,
+  "slam": {
+    "bot1": {
+      "first_pose_se3_ate_max_m": 3.010035045705304,
+      "first_pose_se3_ate_rmse_m": 1.6886244648545954,
+      "root_trajectory_se3_ate_max_m": 0.5954250241017116,
+      "root_trajectory_se3_ate_rmse_m": 0.25237231610235694,
+      "valid_fraction": 1.0,
+      "validity_transitions": 0
+    },
+    "bot2": {
+      "first_pose_se3_ate_max_m": 3.4395689785277757,
+      "first_pose_se3_ate_rmse_m": 1.7210225077564258,
+      "root_trajectory_se3_ate_max_m": 1.2028365097493336,
+      "root_trajectory_se3_ate_rmse_m": 0.9834582114608801,
+      "valid_fraction": 1.0,
+      "validity_transitions": 0
+    }
+  },
+  "stagnant_hgrid_release_count": 0,
+  "stagnant_viewpoint_release_count": 0,
+  "stale_pair_transaction_rejection_count": 3,
+  "target_switch_suppressed_count": 827,
+  "total_ground_truth_distance_m": 894.0197587851501,
+  "viewpoint_information": {
+    "by_drone": {
+      "bot1": {
+        "predicted_planar_area_m2_per_selected_view_max": 45.5,
+        "predicted_planar_area_m2_per_selected_view_mean": 24.389481634527073,
+        "selected_viewpoints": 2178,
+        "unknown_cells_per_selected_view_max": 728,
+        "unknown_cells_per_selected_view_mean": 390.232769054178,
+        "unknown_cells_per_selected_view_min": 9,
+        "updates": 115
+      },
+      "bot2": {
+        "predicted_planar_area_m2_per_selected_view_max": 42.688,
+        "predicted_planar_area_m2_per_selected_view_mean": 24.578949180875973,
+        "selected_viewpoints": 2991,
+        "unknown_cells_per_selected_view_max": 683,
+        "unknown_cells_per_selected_view_mean": 393.2626833834841,
+        "unknown_cells_per_selected_view_min": 15,
+        "updates": 164
+      }
+    },
+    "predicted_planar_area_m2_per_selected_view_max": 45.5,
+    "predicted_planar_area_m2_per_selected_view_mean": 24.499115496227542,
+    "selected_targets": {
+      "count": 220,
+      "hgrid_gain_nonzero_fraction": 0.4909090909090909,
+      "hgrid_unknown_gain_cells": {
+        "count": 220,
+        "max": 984.0,
+        "mean": 211.46818181818182,
+        "median": 0.0,
+        "p90": 691.0,
+        "p95": 764.0
+      },
+      "viewpoint_gain_nonzero_fraction": 0.55,
+      "viewpoint_unknown_gain_cells": {
+        "count": 220,
+        "max": 725.0,
+        "mean": 160.28181818181818,
+        "median": 28.0,
+        "p90": 412.0,
+        "p95": 469.0
+      }
+    },
+    "selected_viewpoints": 5169,
+    "unknown_cells_per_selected_view_max": 728,
+    "unknown_cells_per_selected_view_mean": 391.9860044496042,
+    "unknown_cells_per_selected_view_min": 9,
+    "updates": 279
+  }
+}

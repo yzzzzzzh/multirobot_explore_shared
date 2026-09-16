@@ -1,0 +1,60 @@
+racer_frame_adapter:
+  ros__parameters:
+    use_sim_time: true
+    uav_ids: [1]
+    root_id: 1
+    robot_prefix: "bot"
+    root_frame: "map_origin"
+    output_frame: "world"
+
+    # The teaching-building worlds are centred on the root robot.  RACER sees
+    # a thin z slice while Swarm-LIO2 continues estimating full SE(3) locally.
+    # Root dog spawns at Gazebo (0,-1.5). Translating the root-local LIO
+    # origin back to that pose makes RACER's +/-50 x +/-25 box coincide with
+    # the known building envelope; this is a configured deployment transform,
+    # not runtime ground-truth feedback.
+    # Atrium spawn: bot1 (root) starts at world (-4, 0), so root-frame
+    # coordinates are world + (4, 0).  Translate by (-4, 0) so the RACER
+    # frame coincides with the Gazebo world frame and the HGrid box
+    # [-50,50]x[-25,25] covers exactly the building (with the previous
+    # (0,-1.5) value the whole task grid was shifted by (+4,-1.5) m and a
+    # 4 m column of grid cells lay outside the west wall).
+    output_transform_translation: [-4.0, 0.0, 0.55]
+    output_transform_rotation_xyzw: [0.0, 0.0, 0.0, 1.0]
+    planar_mode: true
+    planar_body_z: 0.55
+    planar_cloud_z: 0.645
+    # Collapse the dog-height obstacle column into RACER's single planning
+    # layer.  The former +/-0.15 m slice retained only about 8% of the
+    # Mid-360 registered scan (roughly 180/2200 points), leaving pinholes in
+    # classroom walls that persisted as false frontiers.  +/-0.45 m keeps
+    # wall, desk and dog-height obstacle returns while its lower bound
+    # (0.195 m in the common frame) still rejects the floor and its upper
+    # bound (1.095 m) rejects the ceiling and door lintels.
+    # Slice = LiDAR height + 0.255 m +/- 0.75 m -> 0.15..1.65 m above the floor:
+    # covers walls, planters and the 1.05-1.65 m lidar-feature posts that the
+    # controller's raw-scan barrier (0.55..1.25 m) also sees; excludes the floor
+    # and the 2.4 m overhead beams.
+    planar_cloud_half_thickness: 0.70
+    planar_source_band_center_offset: 0.70   # Go2 (correct stand_pos, 2026-09-02): lidar ~0.35 m above floor -> band [0.35, 1.75] m; trot attitude error needs >0.3 m floor margin
+    # Cut the slice around the robot's own LiDAR height before the cross-robot
+    # transform (robust to transform z/tilt error and LIO z drift).
+    planar_band_in_source_frame: true
+
+    latch_transforms: true
+    require_bootstrap_complete: true
+    stability_window_seconds: 2.0
+    max_translation_drift: 0.05
+    max_rotation_drift_deg: 0.5
+
+    validate_slam_state: true
+    max_slam_speed: 1.8
+    max_pose_jump_speed: 1.8
+    pose_jump_margin: 0.20
+    max_gravity_disagreement_deg: 20.0
+    max_imu_stamp_delta: 0.5
+    recovery_samples_required: 5
+
+    # LiDAR is mounted 95 mm above the IMU, matching simulation.yaml.
+    lidar_extrinsic_translation: [0.0, 0.0, 0.095]   # Go2: lidar 0.095 m above the trunk IMU (same as Swarm-LIO2 LI_extrinsic_T)
+    lidar_extrinsic_rotation_xyzw: [0.0, 0.0, 0.0, 1.0]

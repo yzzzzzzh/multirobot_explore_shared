@@ -1,0 +1,524 @@
+<launch>
+  <arg name="map_size_x"/>
+  <arg name="map_size_y"/>
+  <arg name="map_size_z"/>
+  <arg name="map_resolution" default="0.1"/>
+  <arg name="ground_height" default="-1.0"/>
+  <arg name="box_min_x" default="-7.0"/>
+  <arg name="box_min_y" default="-15.0"/>
+  <arg name="box_min_z" default="0.0"/>
+  <arg name="box_max_x" default="7.0"/>
+  <arg name="box_max_y" default="15.0"/>
+  <arg name="box_max_z" default="1.7"/>
+  <arg name="obstacles_inflation" default="0.199"/>
+  <arg name="min_target_execution_time" default="-1.0"/>
+  <arg name="euclidean_inflation" default="false"/>
+  <arg name="use_measured_replan_start" default="false"/>
+  <arg name="max_ray_length" default="4.5"/>
+  <arg name="virtual_ceil_height" default="-10.0"/>
+  <arg name="visualization_truncate_height" default="10.09"/>
+  <arg name="frontier_cluster_min" default="100"/>
+  <arg name="frontier_down_sample" default="3"/>
+  <arg name="frontier_min_visib_num" default="30"/>
+  <arg name="frontier_min_candidate_clearance" default="0.21"/>
+  <arg name="frontier_wall_gap_max_cells" default="0"/>
+  <arg name="partitioning_exact_drone_grid_dist" default="15.0"/>
+  <arg name="frontier_wall_gap_min_support_cells" default="1"/>
+  <arg name="astar_max_search_time" default="0.001"/>
+  <arg name="kino_max_search_time" default="1.0"/>
+  <arg name="trigger_stagger" default="0.0"/>
+  <arg name="pair_opt_timer_stagger" default="0.0"/>
+  <arg name="attempt_interval" default="0.1"/>
+  <arg name="pair_opt_interval" default="0.5"/>
+  <arg name="state_freshness" default="0.2"/>
+  <arg name="frontier_update_interval" default="0.5"/>
+  <arg name="enable_planning_visualization" default="true"/>
+  <arg name="partitioning_min_unknown" default="4000"/>
+  <arg name="partitioning_min_frontier" default="100"/>
+  <arg name="partitioning_min_free" default="3000"/>
+  <arg name="partitioning_grid_size" default="5.0"/>
+  <arg name="partitioning_grid_size_z" default="-1.0"/>
+  <arg name="partitioning_split_known_ratio" default="-1.0"/>
+  <arg name="partitioning_min_unknown_ratio" default="-1.0"/>
+  <arg name="partitioning_consistency_sign" default="1.0"/>
+  <arg name="partitioning_first_grid_bonus" default="0.0"/>
+  <arg name="replan_time" default="0.2"/>  <!-- planning-latency lookahead [s]; 0.5 on Jetson Orin -->
+  <arg name="partitioning_require_frontier_for_relevance" default="false"/>
+  <arg name="partitioning_exclude_visited_without_frontier" default="false"/>
+  <arg name="partitioning_max_exact_pair_grids" default="120"/>
+  <arg name="refined_num" default="7"/>
+  <arg name="top_view_num" default="15"/>
+  <!-- 0 selects upstream RACER's LKH ATSP/ACVRP implementation. -->
+  <arg name="fast_grid_tour_threshold" default="0"/>
+  <arg name="fast_frontier_tour_threshold" default="0"/>
+  <arg name="fast_pair_allocation_threshold" default="0"/>
+  <arg name="exact_pair_objective" default="true"/>
+  <arg name="sensor_model" default="camera"/>
+  <arg name="min_translation_progress" default="0.0"/>
+  <arg name="lidar_min_elevation" default="-0.7"/>
+  <arg name="lidar_max_elevation" default="0.9"/>
+  <!-- Keep upstream simulation at 1.0 m. The LiDAR/Gazebo integration uses
+       RACER's official real-world 1.5 m margin because it includes physical
+       trajectory tracking delay. -->
+  <arg name="swarm_safe_dist"
+       default="$(eval 1.5 if arg('sensor_model') == 'lidar_3d' else 1.0)"/>
+  <arg name="drone_id"/>
+  <arg name="drone_num"/>
+
+  <arg name="odometry_topic"/>
+  <arg name="sensor_pose_topic"/>
+  <arg name="depth_topic"/>
+  <arg name="cloud_topic"/>
+
+  <arg name="cx"/>
+  <arg name="cy"/>
+  <arg name="fx"/>
+  <arg name="fy"/>
+  <arg name="max_vel"/>
+  <arg name="max_acc"/>
+  <arg name="simulation" default="true"/>
+  <arg name="single_expo" default="false"/>
+
+  <!-- main node -->
+  <node pkg="exploration_manager" name="exploration_node_$(arg drone_id)" type="exploration_node" output="log">
+    <remap from ="/odom_world" to="$(arg odometry_topic)"/>
+    <remap from ="/map_ros/pose"   to = "$(arg sensor_pose_topic)"/> 
+    <remap from ="/map_ros/depth" to = "$(arg depth_topic)"/>
+    <remap from ="/map_ros/cloud" to="$(arg cloud_topic)"/>
+
+    <remap from="/planning/replan" to="/planning/replan_$(arg drone_id)" />
+    <remap from="/planning/new" to="/planning/new_$(arg drone_id)" />
+    <remap from="/planning/bspline" to="/planning/bspline_$(arg drone_id)" />
+    <remap from="/planning/execution_blocked"
+           to="/racer/bot$(arg drone_id)/execution_blocked" />
+
+    <remap from="/swarm_expl/drone_state_send" to="/swarm_expl/drone_state" />
+    <remap from="/swarm_expl/drone_state_recv" to="/swarm_expl/drone_state" />
+    <remap from="/swarm_expl/pair_opt_send" to="/swarm_expl/pair_opt" />
+    <remap from="/swarm_expl/pair_opt_recv" to="/swarm_expl/pair_opt" />
+    <remap from="/swarm_expl/pair_opt_res_send" to="/swarm_expl/pair_opt_res" />
+    <remap from="/swarm_expl/pair_opt_res_recv" to="/swarm_expl/pair_opt_res" />
+    <remap from="/swarm_expl/frontier_share_send" to="/swarm_expl/frontier_share" />
+    <remap from="/swarm_expl/frontier_share_recv" to="/swarm_expl/frontier_share" />
+    <remap from="/swarm_expl/grid_tour_send" to="/swarm_expl/grid_tour" />
+    <remap from="/swarm_expl/hgrid_send" to="/swarm_expl/hgrid" />
+    <remap from="/multi_map_manager/chunk_stamps_send" to="/multi_map_manager/chunk_stamps" />
+    <remap from="/multi_map_manager/chunk_data_send" to="/multi_map_manager/chunk_data" />
+    <remap from="/multi_map_manager/chunk_stamps_recv" to="/multi_map_manager/chunk_stamps" />
+    <remap from="/multi_map_manager/chunk_data_recv" to="/multi_map_manager/chunk_data" />
+    <!-- Local observations win over partner map chunks (robust to inter-robot frame error). -->
+    <param name="multi_map_manager/remote_overwrites_local" value="false" type="bool"/>
+    <remap from="/planning/swarm_traj_recv" to="/planning/swarm_traj" />
+    <remap from="/planning/swarm_traj_send" to="/planning/swarm_traj" />
+
+    <remap from="/planning_vis/trajectory" to="/planning_vis/trajectory_$(arg drone_id)" />
+    <remap from="/planning_vis/frontier" to="/planning_vis/frontier_$(arg drone_id)" />
+    <remap from="/planning_vis/viewpoints" to="/planning_vis/viewpoints_$(arg drone_id)" />
+
+    <remap from="/sdf_map/occupancy_all" to="/sdf_map/occupancy_all_$(arg drone_id)" />
+    <remap from="/sdf_map/occupancy_local" to="/sdf_map/occupancy_local_$(arg drone_id)" />
+    <remap from="/sdf_map/occupancy_local_inflate" to="/sdf_map/occupancy_local_inflate_$(arg drone_id)" />
+    <remap from="/sdf_map/unknown" to="/sdf_map/unknown_$(arg drone_id)" />
+    <remap from="/sdf_map/update_range" to="/sdf_map/update_range_$(arg drone_id)" />
+    <remap from="/sdf_map/voxel_stats" to="/sdf_map/voxel_stats_$(arg drone_id)" />
+    <remap from="/sdf_map/basecoor" to="/swarm_sim_tf/basecoor_$(arg drone_id)" if="$(arg simulation)"/>
+    <remap from="/sdf_map/basecoor" to="/swarm_drones/swarm_drone_basecoor" unless="$(arg simulation)"/>
+    
+
+    <param name="sdf_map/resolution"      value="$(arg map_resolution)" />
+    <param name="sdf_map/map_size_x"   value="$(arg map_size_x)" /> 
+    <param name="sdf_map/map_size_y"   value="$(arg map_size_y)" /> 
+    <param name="sdf_map/map_size_z"   value="$(arg map_size_z)" /> 
+    <param name="sdf_map/obstacles_inflation"     value="$(arg obstacles_inflation)" />
+    <param name="sdf_map/euclidean_inflation" value="$(arg euclidean_inflation)" type="bool"/>
+    <!-- <param name="sdf_map/obstacles_inflation"     value="0.0" />  -->
+    <param name="sdf_map/local_bound_inflate"    value="0.5"/>
+    <param name="sdf_map/local_map_margin" value="50"/>
+    <param name="sdf_map/ground_height"        value="$(arg ground_height)"/>
+    <param name="sdf_map/default_dist"        value="0.5"/>
+    
+    <param name="sdf_map/p_hit"  value="0.80"/>  <!-- walls appear after 3 hits (was 5.5) -->
+    <param name="sdf_map/p_miss" value="0.45"/>  <!-- walls need 10 grazing misses to vanish (was 3.4) -->
+    <param name="sdf_map/p_min"  value="0.12"/>
+    <param name="sdf_map/p_max"  value="0.90"/>
+    <param name="sdf_map/p_occ"  value="0.80"/>
+    <param name="sdf_map/min_ray_length" value="0.5"/>
+    <param name="sdf_map/max_ray_length" value="$(arg max_ray_length)"/>
+    <param name="sdf_map/virtual_ceil_height" value="$(arg virtual_ceil_height)"/>
+    <param name="sdf_map/optimistic" value="true" type="bool"/>
+    <param name="sdf_map/signed_dist" value="false" type="bool"/>
+    <!-- <param name="sdf_map/box_min_x" value="-4" type="double"/>
+    <param name="sdf_map/box_min_y" value="-7" type="double"/>
+    <param name="sdf_map/box_min_z" value="0.0" type="double"/>
+    <param name="sdf_map/box_max_x" value="4" type="double"/>
+    <param name="sdf_map/box_max_y" value="7" type="double"/>
+    <param name="sdf_map/box_max_z" value="2.0" type="double"/> -->
+    <param name="sdf_map/box_min_x" value="$(arg box_min_x)" type="double"/>
+    <param name="sdf_map/box_min_y" value="$(arg box_min_y)" type="double"/>
+    <param name="sdf_map/box_min_z" value="$(arg box_min_z)" type="double"/>
+    <param name="sdf_map/box_max_x" value="$(arg box_max_x)" type="double"/>
+    <param name="sdf_map/box_max_y" value="$(arg box_max_y)" type="double"/>
+    <param name="sdf_map/box_max_z" value="$(arg box_max_z)" type="double"/>
+    <param name="sdf_map/no_drone_1" value="false" type="bool"/>
+
+    <param name="map_ros/cx" value="$(arg cx)"/>
+    <param name="map_ros/cy" value="$(arg cy)"/>
+    <param name="map_ros/fx" value="$(arg fx)"/>
+    <param name="map_ros/fy" value="$(arg fy)"/>
+    <param name="map_ros/depth_filter_maxdist"   value="4.6"/>
+    <param name="map_ros/depth_filter_mindist"   value="0.2"/>
+    <param name="map_ros/depth_filter_margin"    value="2"/>
+    <param name="map_ros/k_depth_scaling_factor" value="1000.0"/>
+    <param name="map_ros/skip_pixel" value="2"/>
+    <param name="map_ros/esdf_slice_height" value="0.5"/>
+    <param name="map_ros/visualization_truncate_height"   value="$(arg visualization_truncate_height)"/>
+    <param name="map_ros/visualization_truncate_low"   value="-2.0"/>
+    <param name="map_ros/show_occ_time"  value="false"/>
+    <param name="map_ros/show_esdf_time" value="false"/>
+    <param name="map_ros/show_all_map" value="true"/>
+    <param name="map_ros/frame_id"      value="world"/>
+
+    <!-- Fsm -->
+    <param name="fsm/thresh_replan1" value="0.2" type="double"/>
+    <param name="fsm/thresh_replan2" value="0.2" type="double"/>
+    <param name="fsm/thresh_replan3" value="3.0" type="double"/>
+    <!-- <param name="fsm/thresh_replan1" value="0.00001" type="double"/> -->
+    <!-- <param name="fsm/thresh_replan2" value="100.0" type="double"/> -->
+    <!-- <param name="fsm/thresh_replan3" value="0.1" type="double"/> -->
+    <param name="fsm/replan_time" value="$(arg replan_time)" type="double"/>
+    <param name="fsm/plan_retry_interval" value="0.20" type="double"/>
+    <param name="fsm/idle_check_interval" value="2.0" type="double"/>
+    <param name="fsm/frontier_update_interval" value="$(arg frontier_update_interval)" type="double"/>
+    <param name="fsm/enable_planning_visualization" value="$(arg enable_planning_visualization)" type="bool"/>
+    <param name="fsm/trigger_stagger" value="$(arg trigger_stagger)" type="double"/>
+    <param name="fsm/pair_opt_timer_stagger" value="$(arg pair_opt_timer_stagger)" type="double"/>
+    <!-- The per-robot HGrid quarantine/blacklist (failure TTLs, stagnation
+         release) has been removed: failed or stalled tasks stay in the route
+         and are re-costed on the next tour. -->
+    <!-- Allocation churn hysteresis (ground robots): a candidate keeping
+         < 60% of either current route must improve the pair sum by >= 8%;
+         otherwise unallocated tasks are inserted greedily (baseline). -->
+    <!-- Viewpoint-level exit (ground robots): a reached viewpoint whose
+         frontier does not change within 4 s, or one the controller reports
+         blocked twice, is suppressed for 60 s.  No HGrid/frontier deletion. -->
+    <param name="fsm/arrived_no_gain_timeout"
+           value="$(eval 4.0 if arg('sensor_model') == 'lidar_3d' else 0.0)" type="double"/>
+    <param name="fsm/viewpoint_block_ttl" value="60.0" type="double"/>
+    <param name="fsm/viewpoint_stagnation_timeout"
+           value="$(eval 10.0 if arg('sensor_model') == 'lidar_3d' else 0.0)" type="double"/>
+    <param name="fsm/viewpoint_stagnation_radius" value="2.0" type="double"/>
+    <param name="fsm/no_progress_block_timeout"
+           value="$(eval 15.0 if arg('sensor_model') == 'lidar_3d' else 0.0)" type="double"/>
+    <param name="fsm/no_progress_block_distance" value="1.0" type="double"/>
+    <!-- Moving but never getting closer (door limit cycle / unreachable fallback viewpoint). -->
+    <param name="fsm/approach_stall_timeout" value="20.0" type="double"/>
+    <!-- A frontier-less cell whose fallback target fails to plan 3 times in a row is released. -->
+    <param name="fsm/fallback_grid_release_after" value="3" type="int"/>
+    <param name="fsm/approach_progress_distance" value="1.5" type="double"/>
+    <param name="fsm/plan_fail_block_after"
+           value="$(eval 4 if arg('sensor_model') == 'lidar_3d' else 0)" type="int"/>
+    <param name="fsm/pair_opt_min_keep_fraction"
+           value="$(eval 0.6 if arg('sensor_model') == 'lidar_3d' else 0.0)" type="double"/>
+    <param name="fsm/pair_opt_reshuffle_min_gain"
+           value="$(eval 0.08 if arg('sensor_model') == 'lidar_3d' else 0.0)" type="double"/>
+    <param name="fsm/reachability_filter_max_tasks"
+           value="$(eval 8 if arg('sensor_model') == 'lidar_3d' else 0)"
+           type="int"/>
+    <!-- Recover a bounded nearest batch per pair transaction. This prevents a
+         burst of rediscovered HGrids from turning one callback into a
+         full-map O(N^2) cost-matrix rebuild. A non-positive value preserves
+         the upstream unlimited behavior. -->
+    <param name="fsm/recovery_batch_size"
+           value="$(eval 6 if arg('sensor_model') == 'lidar_3d' else 0)"
+           type="int"/>
+    <!-- Minimum time a committed target is held before a periodic/covered
+         replan may switch it. Slow platforms (legged Go2, ~0.2 m/s) thrash
+         between distant targets every few seconds with the 1 s default;
+         a negative launch arg keeps the sensor-model default. -->
+    <param name="fsm/min_target_execution_time"
+           value="$(eval float(arg('min_target_execution_time')) if float(arg('min_target_execution_time')) >= 0.0 else (1.0 if arg('sensor_model') == 'lidar_3d' else 0.0))"
+           type="double"/>
+    <param name="fsm/min_target_execution_distance"
+           value="$(eval 0.75 if arg('sensor_model') == 'lidar_3d' else 0.0)"
+           type="double"/>
+    <param name="fsm/execution_blocked_replan_delay" value="0.5" type="double"/>
+    <param name="fsm/use_measured_replan_start"
+           value="$(arg use_measured_replan_start)" type="bool"/>
+    <param name="fsm/sync_interval" value="0.200" type="double"/>
+    <param name="fsm/wait_delete_duration" value="0.05" type="double"/>
+    <param name="fsm/gain_thresh" value="10" type="int"/>
+
+    <!-- The 50 m 3-D LiDAR map can exceed the bounded 20 ms local A* budget
+         at 0.3 m. Retry timeouts at 0.6 m while retaining 0.1 m continuous
+         edge collision checks. Camera/upstream mode keeps this disabled. -->
+    <!-- Frontier-less assigned HGrid: drive to its unknown centroid first
+         (ground robots), see planExploreMotion. -->
+    <param name="exploration/empty_grid_center_first"
+           value="$(eval 'true' if arg('sensor_model') == 'lidar_3d' else 'false')" type="bool"/>
+    <param name="exploration/empty_grid_center_min_dist" value="1.5" type="double"/>
+    <!-- Frontier-less grid whose nearest frontier is farther than this is released instead of chased. -->
+    <param name="exploration/empty_grid_max_frontier_dist" value="-1.0" type="double"/>
+    <param name="exploration/astar_timeout_retry_resolution"
+           value="$(eval 0.6 if arg('sensor_model') == 'lidar_3d' else 0.0)"
+           type="double"/>
+
+    <param name="fsm/attempt_interval" value="$(arg attempt_interval)" type="double"/>
+    <param name="fsm/pair_opt_interval" value="$(arg pair_opt_interval)" type="double"/>
+    <param name="fsm/state_freshness" value="$(arg state_freshness)" type="double"/>
+    <!-- The camera launch keeps RACER's strict sum-cost acceptance rule. The
+         LiDAR integration additionally prevents an idle UAV from starving
+         while unfinished HGrid tasks remain. -->
+    <param name="fsm/enable_idle_rebalance"
+           value="$(eval arg('sensor_model') == 'lidar_3d')" type="bool"/>
+    <param name="fsm/idle_rebalance_min_makespan_gain" value="0.05" type="double"/>
+    <param name="fsm/idle_rebalance_max_sum_ratio" value="1.75" type="double"/>
+
+    <!-- Match upstream RACER task handoff: PairOpt transfers HGrid IDs and the
+         receiver regenerates viewpoints from its own merged occupancy map.
+         Legacy sender-viewpoint leases remain wire-compatible but disabled. -->
+    <param name="exploration/remote_task_lease_enabled"
+           value="false"
+           type="bool"/>
+    <param name="exploration/remote_task_min_lease" value="15.0" type="double"/>
+    <param name="exploration/remote_task_max_lease" value="180.0" type="double"/>
+    <param name="exploration/remote_task_lease_factor" value="1.5" type="double"/>
+    <param name="exploration/remote_task_assumed_speed"
+           value="$(arg max_vel)" type="double"/>
+    <param name="exploration/remote_task_arrival_radius" value="0.75" type="double"/>
+    <param name="exploration/remote_task_validation_updates" value="3" type="int"/>
+    <param name="exploration/remote_task_dormant_ttl" value="120.0" type="double"/>
+
+    <!-- If this LiDAR vehicle has no local frontier, receive an unreserved
+         frontier cluster from a teammate, wait for RACER ChunkData occupancy
+         fusion, then regenerate and A*-validate the viewpoint locally. -->
+    <param name="exploration/peer_frontier_rescue_enabled"
+           value="$(eval arg('sensor_model') == 'lidar_3d')" type="bool"/>
+    <param name="exploration/peer_frontier_share_interval"
+           value="$(arg frontier_update_interval)" type="double"/>
+    <param name="exploration/peer_frontier_max_age" value="6.0" type="double"/>
+    <param name="exploration/peer_frontier_claim_ttl" value="15.0" type="double"/>
+    <param name="exploration/peer_frontier_failure_ttl" value="30.0" type="double"/>
+    <param name="exploration/peer_frontier_reserved_radius" value="0.75" type="double"/>
+    <param name="exploration/peer_frontier_share_limit" value="16" type="int"/>
+    <param name="exploration/peer_frontier_cell_limit" value="96" type="int"/>
+    <param name="exploration/peer_frontier_search_limit" value="8" type="int"/>
+    <param name="exploration/peer_frontier_max_views" value="4" type="int"/>
+
+    <param name="partitioning/min_unknown" value="$(arg partitioning_min_unknown)" type="int"/>;
+    <param name="partitioning/min_frontier" value="$(arg partitioning_min_frontier)" type="int"/>;
+    <param name="partitioning/min_free" value="$(arg partitioning_min_free)" type="int"/>;
+    <param name="partitioning/consistent_cost" value="-5" type="double"/>;
+    <param name="partitioning/consistent_cost2" value="8" type="double"/>;
+    <param name="partitioning/w_unknown" value="0.0" type="double"/>;
+    <param name="partitioning/grid_size" value="$(arg partitioning_grid_size)" type="double"/>;
+    <param name="partitioning/grid_size_z" value="$(arg partitioning_grid_size_z)" type="double"/>;
+    <param name="partitioning/split_known_ratio" value="$(arg partitioning_split_known_ratio)" type="double"/>;
+    <param name="partitioning/min_unknown_ratio" value="$(arg partitioning_min_unknown_ratio)" type="double"/>;
+    <!-- Ignore unknown voxels sealed off by occupied voxels (wall interiors, outside the building): they can never become frontiers. -->
+    <param name="partitioning/observable_unknown_only" value="true" type="bool"/>
+    <!-- Grids within 2.5 m of the robot count as visited (drops adjacent frontier-less cells). -->
+    <param name="partitioning/visit_margin" value="0.0" type="double"/>
+    <!-- A frontier-less, unvisited cell stays a task only if >=50% unknown (a real unexplored area). -->
+    <param name="partitioning/frontierless_min_unknown_ratio" value="0.5" type="double"/>
+    <param name="partitioning/require_frontier_for_relevance"
+           value="$(arg partitioning_require_frontier_for_relevance)" type="bool"/>;
+    <param name="partitioning/exclude_visited_without_frontier"
+           value="$(arg partitioning_exclude_visited_without_frontier)" type="bool"/>;
+    <!-- A frontier is executable only when its selected viewpoint exposes new
+         unknown voxels.  Incoming route edges are multiplied by a decreasing
+         gain factor; unlike an additive per-task reward, this changes the
+         ordering of a route that must eventually visit every HGrid. -->
+    <!-- No hard gain threshold: a low-gain frontier stays a valid task; the
+         gain only re-weights the incoming route edge below. -->
+    <param name="partitioning/min_viewpoint_unknown_gain" value="0" type="int"/>;
+    <param name="partitioning/unknown_gain_cost_weight"
+           value="$(eval 2.0 if arg('sensor_model') == 'lidar_3d' else 0.0)" type="double"/>;
+    <!-- Planar 0.25 m map: measured per-HGrid viewpoint gains are mostly a
+         few tens to ~200 unique unknown cells, so saturate at 150 to keep the
+         gain factor discriminative instead of applying ~3x to every task. -->
+    <param name="partitioning/unknown_gain_saturation" value="150" type="int"/>;
+    <param name="partitioning/max_exact_pair_grids" value="$(arg partitioning_max_exact_pair_grids)" type="int"/>;
+    <!-- Exact obstacle-aware A* drone-to-grid cost within 15 m (upstream
+         hardcoded 5 m); beyond that a 1.5x straight-line estimate is used. -->
+    <param name="partitioning/exact_drone_grid_dist" value="$(arg partitioning_exact_drone_grid_dist)" type="double"/>;
+    <!-- Dedicated HGrid/CVRP A* budget (trajectory-level A* keeps
+         astar/max_search_time). -->
+    <param name="partitioning/hgrid_astar_max_search_time" value="0.2" type="double"/>
+    <!-- Edge cost when that bounded A* times out (cell behind a wall): a fixed large value instead of straight-line + 8. -->
+    <param name="partitioning/hgrid_astar_timeout_cost" value="100.0" type="double"/>;
+    <param name="partitioning/consistency_sign" value="$(arg partitioning_consistency_sign)" type="double"/>
+    <param name="partitioning/first_grid_bonus" value="$(arg partitioning_first_grid_bonus)" type="double"/>
+    <param name="partitioning/compute_exact_tour_visualization" value="false" type="bool"/>;
+    <param name="partitioning/use_swarm_tf" value="true" type="bool"/>;
+    <param name="frontier/max_exact_cost_matrix_size" value="12" type="int"/>;
+
+    <!-- Exploration manager -->
+
+    <param name="exploration/refine_local" value="true" type="bool"/>
+    <param name="exploration/refined_num" value="$(arg refined_num)" type="int"/>
+    <param name="exploration/refined_radius" value="5.0" type="double"/>
+    <param name="exploration/max_decay" value="0.8" type="double"/>
+    <param name="exploration/top_view_num" value="$(arg top_view_num)" type="int"/>
+    <param name="exploration/vm" value="$(eval 1.0 * arg('max_vel'))" type="double"/>
+    <param name="exploration/am" value="$(eval 1.0 * arg('max_acc'))" type="double"/>
+    <param name="exploration/yd" value="$(eval 80 * 3.1415926 / 180.0)" type="double"/>
+    <!-- <param name="exploration/yd" value="$(eval 60 * 3.1415926 / 180.0)" type="double"/> -->
+    <param name="exploration/ydd" value="$(eval 90 * 3.1415926 / 180.0)" type="double"/>
+    <param name="exploration/w_dir" value="1.5" type="double"/>
+    <param name="exploration/tsp_dir" value="$(find lkh_tsp_solver)/resource" type="string"/>
+    <param name="exploration/mtsp_dir" value="$(find lkh_mtsp_solver)/resource" type="string"/>
+    <param name="exploration/drone_num" value="$(arg drone_num)" type="double"/>
+    <param name="exploration/drone_id" value="$(arg drone_id)" type="int"/>
+    <param name="exploration/init_plan_num" value="2" type="int"/>
+    <param name="exploration/optimistic_fallback_range"
+           value="$(arg max_ray_length)" type="double"/>
+    <param name="exploration/min_translation_progress"
+           value="$(arg min_translation_progress)" type="double"/>
+    <param name="exploration/fast_grid_tour_threshold" value="$(arg fast_grid_tour_threshold)" type="int"/>
+    <param name="exploration/fast_frontier_tour_threshold" value="$(arg fast_frontier_tour_threshold)" type="int"/>
+    <param name="exploration/fast_pair_allocation_threshold" value="$(arg fast_pair_allocation_threshold)" type="int"/>
+    <param name="exploration/exact_pair_objective" value="$(arg exact_pair_objective)" type="bool"/>
+
+    <param name="frontier/cluster_min" value="$(arg frontier_cluster_min)" type="int"/>
+    <param name="frontier/cluster_size_xy" value="2.0" type="double"/>
+    <param name="frontier/cluster_size_z" value="10.0" type="double"/>
+    <param name="frontier/min_candidate_dist" value="0.5" type="double"/>
+    <param name="frontier/min_candidate_clearance"
+           value="$(arg frontier_min_candidate_clearance)" type="double"/>
+    <!-- Ground robots: keep viewpoints outside the controller's 0.90 m
+         raw-LiDAR protected clearance (0.65 + 0.25). -->
+    <param name="frontier/viewpoint_block_radius" value="2.0" type="double"/>
+    <param name="frontier/min_candidate_obstacle_clearance"
+           value="$(eval 0.95 if arg('sensor_model') == 'lidar_3d' else 0.0)" type="double"/>
+    <param name="frontier/candidate_dphi" value="$(eval 15 * 3.1415926 / 180.0)" type="double"/>
+    <param name="frontier/candidate_rnum" value="3" type="int"/>
+    <param name="frontier/candidate_rmin" value="1.0" type="double"/>
+    <param name="frontier/candidate_rmax" value="1.5" type="double"/>
+    <param name="frontier/down_sample" value="$(arg frontier_down_sample)" type="int"/>;
+    <param name="frontier/min_visib_num" value="$(arg frontier_min_visib_num)" type="int"/>;
+    <!-- Planner-only wall mask: each OCCUPIED voxel is dilated by a square
+         (2r+1)x(2r+1) XY window (r = wall_gap_max_cells, 2 -> 5x5).  The
+         support-cells argument is retained for launch compatibility only. -->
+    <param name="frontier/wall_gap_max_cells"
+           value="$(arg frontier_wall_gap_max_cells)" type="int"/>;
+    <param name="frontier/wall_gap_min_support_cells"
+           value="$(arg frontier_wall_gap_min_support_cells)" type="int"/>;
+    <param name="frontier/unknown_gain_max_dist" value="$(arg max_ray_length)" type="double"/>;
+    <param name="frontier/unknown_gain_max_rays" value="64" type="int"/>;
+    <param name="frontier/min_view_finish_fraction" value="0.2" type="double"/>;
+
+
+    <!-- Perception utils -->
+    <param name="perception_utils/top_angle" value="0.56125" type="double"/>;
+    <param name="perception_utils/left_angle" value="0.69222" type="double"/>;
+    <param name="perception_utils/right_angle" value="0.68901" type="double"/>;
+    <param name="perception_utils/max_dist" value="$(arg max_ray_length)" type="double"/>;
+    <param name="perception_utils/vis_dist" value="1.0" type="double"/>;
+    <param name="perception_utils/sensor_model" value="$(arg sensor_model)" type="string"/>;
+    <param name="perception_utils/lidar_min_elevation" value="$(arg lidar_min_elevation)" type="double"/>;
+    <param name="perception_utils/lidar_max_elevation" value="$(arg lidar_max_elevation)" type="double"/>;
+
+
+    <param name="heading_planner/yaw_diff" value="$(eval 30 * 3.1415926 / 180.0)" type="double"/>
+    <param name="heading_planner/half_vert_num" value="5" type="int"/>
+    <param name="heading_planner/lambda1" value="2.0" type="double"/>
+    <param name="heading_planner/lambda2" value="1.0" type="double"/>
+    <param name="heading_planner/max_yaw_rate" value="$(eval 10 * 3.1415926 / 180.0)" type="double"/>
+    <param name="heading_planner/w" value="20000.0" type="double"/>
+    <param name="heading_planner/weight_type" value="1" type="double"/>
+
+  <!-- planner manager -->
+    <!-- <param name="manager/max_vel" value="$(arg max_vel)" type="double"/> -->
+    <param name="manager/max_vel" value="$(arg max_vel)" type="double"/>
+    <param name="manager/max_acc" value="$(arg max_acc)" type="double"/>
+    <param name="manager/max_jerk" value="4" type="double"/>
+    <param name="manager/dynamic_environment" value="0" type="int"/>
+    <param name="manager/local_segment_length" value="6.0" type="double"/>
+    <param name="manager/clearance_threshold"
+           value="$(eval 0.85 if arg('sensor_model') == 'lidar_3d' else 0.30)"
+           type="double"/>
+    <param name="manager/control_points_distance" value="0.5" type="double"/>
+    <param name="manager/use_geometric_path" value="true" type="bool"/>
+    <param name="manager/use_kinodynamic_path" value="true" type="bool"/>
+    <param name="manager/use_topo_path" value="false" type="bool"/>
+    <param name="manager/use_optimization" value="true" type="bool"/>
+    <param name="manager/use_active_perception" value="true" type="bool"/>
+    <param name="manager/min_time" value="true" type="bool"/>
+    <param name="manager/relax_time1" value="0.3" type="double"/>
+    <param name="manager/relax_time2" value="1.5" type="double"/>
+    <param name="manager/max_yawdot" value="$(eval 120 * 3.1415926 / 180.0)" type="double"/>
+
+  <!-- kinodynamic path searching -->
+    <param name="search/max_tau" value="0.8" type="double"/>
+    <param name="search/init_max_tau" value="1.0" type="double"/>
+    <param name="search/max_vel" value="$(arg max_vel)" type="double"/>
+    <param name="search/vel_margin" value="0.25" type="double"/>
+    <param name="search/max_acc" value="$(arg max_acc)" type="double"/>
+    <param name="search/max_search_time" value="$(arg kino_max_search_time)" type="double"/>
+    <param name="search/w_time" value="10.0" type="double"/>
+    <param name="search/horizon" value="5.0" type="double"/>
+    <param name="search/lambda_heu" value="10.0" type="double"/>
+    <param name="search/resolution_astar" value="0.025" type="double"/>
+    <param name="search/time_resolution" value="0.8" type="double"/>
+    <param name="search/margin" value="0.2" type="double"/>
+    <param name="search/allocate_num" value="100000" type="int"/>
+    <param name="search/check_num" value="10" type="int"/>
+    <param name="search/optimistic" value="false" type="bool"/>
+
+    <param name="astar/lambda_heu" value="10000.0" type="double"/>
+    <param name="astar/resolution_astar" value="0.3" type="double"/>
+    <param name="astar/allocate_num" value="1000000" type="int"/>
+    <param name="astar/max_search_time" value="$(arg astar_max_search_time)" type="double"/>
+
+  <!-- trajectory optimization -->
+    <param name="optimization/ld_smooth" value="5.0" type="double"/>
+    <param name="optimization/ld_dist" value="10.0" type="double"/>
+    <param name="optimization/ld_feasi" value="2.0" type="double"/>
+    <param name="optimization/ld_start" value="100.0" type="double"/>
+    <param name="optimization/ld_end" value="0.5" type="double"/>
+    <param name="optimization/ld_guide" value="1.5" type="double"/>
+    <param name="optimization/ld_waypt" value="7.0" type="double"/>
+    <param name="optimization/ld_view" value="0.0" type="double"/>
+    <param name="optimization/ld_time" value="1.5" type="double"/>
+    <param name="optimization/ld_swarm" value="5.0" type="double"/>
+    <param name="optimization/swarm_safe_dist" value="$(arg swarm_safe_dist)" type="double"/>
+    <param name="optimization/dist0" value="0.7" type="double"/>
+    <param name="optimization/max_vel" value="$(arg max_vel)" type="double"/>
+    <param name="optimization/max_acc" value="$(arg max_acc)" type="double"/>
+    <param name="optimization/algorithm1" value="15" type="int"/>
+    <param name="optimization/algorithm2" value="11" type="int"/>
+    <param name="optimization/max_iteration_num1" value="2" type="int"/>
+    <param name="optimization/max_iteration_num2" value="2000" type="int"/>
+    <param name="optimization/max_iteration_num3" value="200" type="int"/>
+    <param name="optimization/max_iteration_num4" value="200" type="int"/>
+
+    <param name="optimization/max_iteration_time1" value="0.0001" type="double"/>
+    <param name="optimization/max_iteration_time2" value="0.005" type="double"/>
+    <param name="optimization/max_iteration_time3" value="0.003" type="double"/>
+    <param name="optimization/max_iteration_time4" value="0.003" type="double"/>
+    <param name="bspline/limit_vel" value="$(arg max_vel)" type="double"/>
+    <param name="bspline/limit_acc" value="$(arg max_acc)" type="double"/>
+    <param name="bspline/limit_ratio" value="1.1" type="double"/>
+    <param name="bspline/limit_vel" value="$(arg max_vel)" type="double"/>
+    <param name="bspline/limit_acc" value="$(arg max_acc)" type="double"/>
+    <param name="bspline/limit_ratio" value="1.1" type="double"/>
+  </node>
+
+  <!-- <node pkg="lkh_tsp_solver" name="tsp_solver_$(arg drone_id)" type="tsp_node" output="screen">
+    <param name="exploration/drone_id" value="$(arg drone_id)" type="int"/>
+    <param name="exploration/tsp_dir"  value="$(find lkh_tsp_solver)/resource" type="string"/>
+  </node> -->
+  
+  <node pkg="lkh_mtsp_solver" name="tsp_solver_$(arg drone_id)" type="mtsp_node" output="log">
+    <param name="exploration/drone_id" value="$(arg drone_id)" type="int"/>
+    <param name="exploration/mtsp_dir" value="$(find lkh_mtsp_solver)/resource" type="string"/>
+    <param name="exploration/problem_id" value="1" type="int"/>
+  </node>
+
+  <node pkg="lkh_mtsp_solver" name="acvrp_solver_$(arg drone_id)" type="mtsp_node" output="log">
+    <param name="exploration/drone_id" value="$(arg drone_id)" type="int"/>
+    <param name="exploration/mtsp_dir" value="$(find lkh_mtsp_solver)/resource" type="string"/>
+    <param name="exploration/problem_id" value="2" type="int"/>
+  </node>
+  
+</launch>

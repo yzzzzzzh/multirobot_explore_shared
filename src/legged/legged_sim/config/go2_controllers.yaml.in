@@ -1,0 +1,156 @@
+# Rendered per robot by legged_atrium.launch.py (__NS__ -> bot1/bot2).
+/__NS__/controller_manager:
+  ros__parameters:
+    update_rate: 1000  # Hz: read()/update() every physics step (1 ms) so the joint PD in write() never uses stale states
+    # params_file makes the controller manager hand each controller its own
+    # parameter file at load time (deterministic with two robots in one
+    # Gazebo process; the spawner's -p option raced between the two).
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+      params_file: /tmp/go2_controllers___NS__.yaml
+    imu_sensor_broadcaster:
+      type: imu_sensor_broadcaster/IMUSensorBroadcaster
+      params_file: /tmp/go2_controllers___NS__.yaml
+    unitree_guide_controller:
+      type: unitree_guide_controller/UnitreeGuideController
+      params_file: /tmp/go2_controllers___NS__.yaml
+    rl_quadruped_controller:
+      type: rl_quadruped_controller/LeggedGymController
+      params_file: /tmp/go2_controllers___NS__.yaml
+
+/__NS__/imu_sensor_broadcaster:
+  ros__parameters:
+    sensor_name: "imu_sensor"
+    frame_id: "__NS__/imu_link"
+
+/__NS__/unitree_guide_controller:
+  ros__parameters:
+    update_rate: 200  # Hz
+    joints:
+      - FR_hip_joint
+      - FR_thigh_joint
+      - FR_calf_joint
+      - FL_hip_joint
+      - FL_thigh_joint
+      - FL_calf_joint
+      - RR_hip_joint
+      - RR_thigh_joint
+      - RR_calf_joint
+      - RL_hip_joint
+      - RL_thigh_joint
+      - RL_calf_joint
+
+    command_interfaces:
+      - effort
+      - position
+      - velocity
+      - kp
+      - kd
+
+    state_interfaces:
+      - effort
+      - position
+      - velocity
+
+    feet_names:
+      - FR_foot
+      - FL_foot
+      - RR_foot
+      - RL_foot
+
+    imu_name: "imu_sensor"
+    base_name: "base"
+
+    imu_interfaces:
+      - orientation.w
+      - orientation.x
+      - orientation.y
+      - orientation.z
+      - angular_velocity.x
+      - angular_velocity.y
+      - angular_velocity.z
+      - linear_acceleration.x
+      - linear_acceleration.y
+      - linear_acceleration.z
+
+/__NS__/rl_quadruped_controller:
+  ros__parameters:
+    update_rate: 200  # Hz
+    # stand_pos doubles as the policy's default_dof_pos (StateRL::init_pos_) and
+    # therefore MUST be the training default of the loaded policy, in the order of
+    # `joints` below (FL, FR, RL, RR).  HIMLoco / legged_gym Go2: hip +-0.1,
+    # thigh 0.8 front / 1.0 rear, calf -1.5.  Without it the controller falls back
+    # to {0, 0.67, -1.3}: the policy then walks at ~65% of the commanded speed,
+    # stops stepping below ~0.3 m/s and winds the hips to the +-1.05 rad limit on
+    # yaw-only commands (2026-09-01 A/B on flat_legged.world).
+    stand_pos:
+      - 0.1
+      - 0.8
+      - -1.5
+      - -0.1
+      - 0.8
+      - -1.5
+      - 0.1
+      - 1.0
+      - -1.5
+      - -0.1
+      - 1.0
+      - -1.5
+    robot_pkg: "go2_description"
+    model_folder: "__RL_MODEL__"  # legged_gym (upstream's Gazebo default) or himloco
+    # Run the policy inside update() every `decimation` cycles (50 Hz sim time)
+    # instead of a wall-clock thread: the simulation runs below real time and
+    # the thread was racing update() on the robot state.
+    use_rl_thread: false
+    joints:
+      - FL_hip_joint
+      - FL_thigh_joint
+      - FL_calf_joint
+      - FR_hip_joint
+      - FR_thigh_joint
+      - FR_calf_joint
+      - RL_hip_joint
+      - RL_thigh_joint
+      - RL_calf_joint
+      - RR_hip_joint
+      - RR_thigh_joint
+      - RR_calf_joint
+
+    command_interfaces:
+      - effort
+      - position
+      - velocity
+      - kp
+      - kd
+
+    state_interfaces:
+      - effort
+      - position
+      - velocity
+
+    down_pos:
+      - 0.01
+      - 1.27
+      - -2.8
+      - -0.01
+      - 1.27
+      - -2.8
+      - 0.3
+      - 1.31
+      - -2.8
+      - -0.3
+      - 1.31
+      - -2.8
+
+    imu_name: "imu_sensor"
+    imu_interfaces:
+      - orientation.w
+      - orientation.x
+      - orientation.y
+      - orientation.z
+      - angular_velocity.x
+      - angular_velocity.y
+      - angular_velocity.z
+      - linear_acceleration.x
+      - linear_acceleration.y
+      - linear_acceleration.z

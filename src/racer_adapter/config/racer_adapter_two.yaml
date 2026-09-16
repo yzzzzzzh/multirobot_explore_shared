@@ -1,0 +1,17 @@
+racer_frame_adapter:
+  ros__parameters:
+    use_sim_time: true
+    uav_ids: [1, 2]
+    root_id: 1
+    robot_prefix: "bot"
+    root_frame: "map_origin"
+    output_frame: "world"
+    output_transform_translation: [-22.5, -12.5, 11.6]
+    output_transform_rotation_xyzw: [0.0, 0.0, 0.0, 1.0]
+    latch_transforms: true
+    require_bootstrap_complete: true
+    stability_window_seconds: 3.0
+    max_translation_drift: 0.05
+    max_rotation_drift_deg: 0.5
+    lidar_extrinsic_translation: [0.0, 0.0, 0.095]
+    lidar_extrinsic_rotation_xyzw: [0.0, 0.0, 0.0, 1.0]

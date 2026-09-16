@@ -1,0 +1,93 @@
+# Live RACER + Swarm-LIO2 integration.
+#
+# This overlay deliberately keeps all RACER custom messages inside ROS 1.
+# Only the standard LiDAR/pose/odometry/command boundary will cross middleware.
+# racer的启动脚本
+services:
+  racer_ros1:
+    container_name: racer_ros1
+    build:
+      context: .
+      dockerfile: src/racer_integration/Dockerfile.ros1
+    network_mode: host
+    environment:
+      ROS_MASTER_URI: http://127.0.0.1:11311
+      ROS_IP: 127.0.0.1
+      DISPLAY: ${DISPLAY:-:1}
+      RACER_BOTS: ${RACER_BOTS:-1}
+      RACER_ENABLE_TRAJECTORY_SERVER: ${RACER_ENABLE_TRAJECTORY_SERVER:-true}
+      RACER_AUTO_TRIGGER: ${RACER_AUTO_TRIGGER:-true}
+      RACER_MAP_WARMUP_SECONDS: ${RACER_MAP_WARMUP_SECONDS:-10}
+      RACER_PLANNER_MAX_VEL: ${RACER_PLANNER_MAX_VEL:-1.5}
+      RACER_PLANNER_MAX_ACC: ${RACER_PLANNER_MAX_ACC:-1.0}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./src/racer_integration:/racer_integration:ro
+      # Launch tuning is configuration-only; mount it so grid/count fixes do
+      # not require recompiling the unchanged ROS 1 C++ workspace.
+      - ./src/RACER/swarm_exploration/exploration_manager/launch:/racer_ws/src/RACER/swarm_exploration/exploration_manager/launch:ro
+    command: /bin/bash /racer_integration/run_ros1_stack.sh
+
+  swarm_lio2:
+    environment:
+      RACER_BOTS: ${RACER_BOTS:-1}
+      RACER_ADAPTER_CONFIG: ${RACER_ADAPTER_CONFIG:-racer_adapter_single.yaml}
+      SWARM_FORCE_UAV_NUM: ${SWARM_FORCE_UAV_NUM:-1}
+      RACER_MAX_HORIZONTAL_SPEED: ${RACER_MAX_HORIZONTAL_SPEED:-1.5}
+      RACER_MAX_VERTICAL_SPEED: ${RACER_MAX_VERTICAL_SPEED:-1.5}
+      RACER_TRACK_RACER_YAW: ${RACER_TRACK_RACER_YAW:-false}
+      SWARM_ENABLE_MUTUAL_OBSERVATION_UPDATE: ${SWARM_ENABLE_MUTUAL_OBSERVATION_UPDATE:-false}
+    volumes:
+      - ./src/racer_adapter:/opt/swarm_lio_ws/src/racer_adapter:ro
+      - ./src/racer_integration:/racer_integration:ro
+    command: >
+      bash -lc "
+        set -e
+        source /opt/ros/humble/setup.bash
+        cd /opt/swarm_lio_ws
+        colcon build --packages-select swarm_lio racer_adapter --cmake-args -DCMAKE_BUILD_TYPE=Release
+        source install/setup.bash
+        ros2 launch swarm_lio simulation.launch.py bot_list:=$${RACER_BOTS} rviz_list:=none use_sim_time:=true cluster_size_thresh:=0.9 force_uav_num:=$${SWARM_FORCE_UAV_NUM} cross_world_transform_mode:=se3 gravity_constrained_extrinsic_rotation:=true enable_mutual_observation_update:=$${SWARM_ENABLE_MUTUAL_OBSERVATION_UPDATE} pcd_save_en:=false local_map_pub_en:=false &
+        ros2 launch racer_adapter racer_frame_adapter.launch.py config:=/opt/swarm_lio_ws/install/racer_adapter/share/racer_adapter/config/$${RACER_ADAPTER_CONFIG} &
+        exec /usr/bin/python3 /racer_integration/ros2_racer_gateway.py --bots $${RACER_BOTS} --host 127.0.0.1 --port 47100 --ros-args -p use_sim_time:=true
+      "
+
+  # Keep the flight controller in its own ROS 2 process container. It starts
+  # before the common frame is ready so it can arm/hover and execute the
+  # ground-truth-free 3D trajectory excitation required by Swarm-LIO2.
+  racer_controller:
+    container_name: racer_controller
+    image: swarm-lio2-ros2
+    network_mode: host
+    ipc: host
+    tty: true
+    stdin_open: true
+    depends_on:
+      swarm_lio2:
+        condition: service_started
+    environment:
+      ROS_DOMAIN_ID: 0
+      RACER_BOTS: ${RACER_BOTS:-1}
+      RACER_MAX_HORIZONTAL_SPEED: ${RACER_MAX_HORIZONTAL_SPEED:-1.5}
+      RACER_MAX_VERTICAL_SPEED: ${RACER_MAX_VERTICAL_SPEED:-1.5}
+      RACER_TRACK_RACER_YAW: ${RACER_TRACK_RACER_YAW:-false}
+      # In the six-UAV RACER layout every vehicle has direct line of sight to
+      # bot1. Move only bot1 and require a complete five-edge star, avoiding
+      # accumulated common-frame error through an infection-tree chain.
+      RACER_BOOTSTRAP_ROOT_ONLY: ${RACER_BOOTSTRAP_ROOT_ONLY:-true}
+      RACER_BOOTSTRAP_RADII: "${RACER_BOOTSTRAP_RADII:-[0.9]}"
+      RACER_BOOTSTRAP_DIRECTIONS: "${RACER_BOOTSTRAP_DIRECTIONS:-[225.0]}"
+      # The barrier operates in the common SLAM frame.  Reserve about 0.6 m
+      # beyond the desired true 2.8 m clearance for two vehicles' frame error.
+      RACER_SEPARATION_ACTIVATION_DISTANCE: ${RACER_SEPARATION_ACTIVATION_DISTANCE:-5.4}
+      RACER_SEPARATION_HARD_DISTANCE: ${RACER_SEPARATION_HARD_DISTANCE:-3.4}
+      RACER_SEPARATION_REPULSION_SPEED: ${RACER_SEPARATION_REPULSION_SPEED:-1.2}
+    volumes:
+      - ./src/racer_integration:/racer_integration:ro
+    command: >
+      bash -lc "
+        set -e
+        source /opt/ros/humble/setup.bash
+        source /opt/swarm_lio_ws/install/setup.bash
+        exec /usr/bin/python3 /racer_integration/ros2_racer_controller.py --bots $${RACER_BOTS} --ros-args -p use_sim_time:=true -p max_horizontal_speed:=$${RACER_MAX_HORIZONTAL_SPEED} -p max_vertical_speed:=$${RACER_MAX_VERTICAL_SPEED} -p max_command_acceleration:=1.0 -p track_racer_yaw:=$${RACER_TRACK_RACER_YAW} -p odom_timeout:=1.5 -p attitude_timeout:=1.0 -p command_timeout:=1.0 -p require_safety_monitor:=true -p bootstrap_root_only:=$${RACER_BOOTSTRAP_ROOT_ONLY} -p bootstrap_radii:=$${RACER_BOOTSTRAP_RADII} -p bootstrap_directions_deg:=$${RACER_BOOTSTRAP_DIRECTIONS} -p separation_activation_distance:=$${RACER_SEPARATION_ACTIVATION_DISTANCE} -p separation_hard_distance:=$${RACER_SEPARATION_HARD_DISTANCE} -p separation_repulsion_speed:=$${RACER_SEPARATION_REPULSION_SPEED}
+      "

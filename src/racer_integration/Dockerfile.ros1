@@ -1,0 +1,71 @@
+FROM osrf/ros:noetic-desktop-full
+
+SHELL ["/bin/bash", "-c"]
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    cmake \
+    curl \
+    git \
+    libarmadillo-dev \
+    libboost-filesystem-dev \
+    libboost-system-dev \
+    libeigen3-dev \
+    libopencv-dev \
+    libpcl-dev \
+    qtbase5-dev \
+    ros-noetic-cmake-modules \
+    ros-noetic-cv-bridge \
+    ros-noetic-dynamic-reconfigure \
+    ros-noetic-image-transport \
+    ros-noetic-laser-geometry \
+    ros-noetic-message-generation \
+    ros-noetic-message-runtime \
+    ros-noetic-nodelet \
+    ros-noetic-pcl-conversions \
+    ros-noetic-pcl-ros \
+    ros-noetic-tf \
+    ros-noetic-tf2-ros \
+    && rm -rf /var/lib/apt/lists/*
+
+# RACER hard-codes /usr/local/include and /usr/local/lib/libnlopt.so.
+RUN curl -L --retry 3 \
+      https://github.com/stevengj/nlopt/archive/refs/tags/v2.7.1.tar.gz \
+      -o /tmp/nlopt.tar.gz \
+    && mkdir -p /tmp/nlopt \
+    && tar -xzf /tmp/nlopt.tar.gz -C /tmp/nlopt --strip-components=1 \
+    && cmake -S /tmp/nlopt -B /tmp/nlopt/build \
+         -DCMAKE_BUILD_TYPE=Release \
+         -DCMAKE_INSTALL_PREFIX=/usr/local \
+         -DNLOPT_PYTHON=OFF \
+         -DNLOPT_OCTAVE=OFF \
+         -DNLOPT_MATLAB=OFF \
+         -DNLOPT_GUILE=OFF \
+    && cmake --build /tmp/nlopt/build --parallel 2 \
+    && cmake --install /tmp/nlopt/build \
+    && ldconfig \
+    && rm -rf /tmp/nlopt /tmp/nlopt.tar.gz
+
+RUN curl -L --retry 3 \
+      http://akira.ruc.dk/~keld/research/LKH-3/LKH-3.0.6.tgz \
+      -o /tmp/LKH-3.0.6.tgz \
+    && tar -xzf /tmp/LKH-3.0.6.tgz -C /tmp \
+    && make -C /tmp/LKH-3.0.6 -j2 \
+    && install -m 0755 /tmp/LKH-3.0.6/LKH /usr/local/bin/LKH \
+    && rm -rf /tmp/LKH-3.0.6 /tmp/LKH-3.0.6.tgz
+
+WORKDIR /racer_ws
+COPY src/RACER/ /racer_ws/src/RACER/
+
+RUN rm -f /racer_ws/src/RACER/COLCON_IGNORE \
+    && source /opt/ros/noetic/setup.bash \
+    && catkin_make -DCMAKE_BUILD_TYPE=Release -j10
+
+COPY src/racer_integration/entrypoint_ros1.sh /entrypoint_ros1.sh
+RUN chmod +x /entrypoint_ros1.sh
+
+ENTRYPOINT ["/entrypoint_ros1.sh"]
+CMD ["bash"]

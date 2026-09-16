@@ -1,0 +1,143 @@
+ros__parameters:
+  evaluation:
+      # Gazebo truth is evaluated by an external recorder.  The estimator
+      # neither subscribes to it nor writes it into the filter state.
+      ground_truth_logging_en: false
+
+  common:
+      lid_topic: None  # to be replaced in launch file with drone_id
+      imu_topic: None  # to be replaced in launch file with drone_id 
+      time_offset_lidar_imu: 0.0
+      drone_id: None  # to be replaced in launch file with drone_id
+
+  multiuav:
+      cluster_extraction_in_predict_region: true
+      # Full upstream-style SE(3) alignment. Set to "se2_legacy" to restore
+      # the previous ROS2-port behavior (yaw+x+y with translation z cleared).
+      cross_world_transform_mode: "se3"
+      # Optional full-SO(3) robustification: preserve trajectory-estimated yaw,
+      # but obtain roll/pitch from each LIO's gravity alignment. It does not
+      # clear z or force world-frame roll/pitch to zero.
+      gravity_constrained_extrinsic_rotation: false
+      # Keep the EKF for association, but align against the current,
+      # time-synchronised cluster measurement to avoid motion-filter lag.
+      use_raw_temp_measurement_for_traj_matching: false
+      comm_range: 20.0   # drone-to-drone radio range [m]; <=0 = unlimited
+      inten_threshold: 1000
+      ground_height_threshold: -0.115  # remove all points below this height (meter)
+      # With the runtime-bounded 3D scan pattern a teammate near the 10 m
+      # limit can occupy a single high-intensity ray. Trajectory excitation
+      # remains the acceptance gate, so permit a one-point seed.
+      min_high_inten_cluster_size: 1
+      # Reject self-reflections from the 0.8 m-wide quadrotor envelope before
+      # creating a temporary teammate tracker.
+      min_high_inten_range: 0.8
+      # Defaults preserve upstream temporary-tracker behavior. The parameters
+      # remain explicit so sparse-beam experiments are reproducible.
+      temp_tracker_lost_timeout: 2.0
+      temp_tracker_prediction_horizon: -1.0
+      valid_temp_cluster_dist_thresh: 0.8
+      trajectory_samples_require_measurement: false
+      min_cluster_size: 3 # Unused
+      predict_region_radius: 0.7
+      temp_predict_region_radius: 0.7
+      traj_matching_start_thresh: 8.0
+      # Default retains near-exact association. Simulation launches may widen
+      # this for independently scheduled lidar sensors.
+      traj_matching_time_tolerance: 0.00001
+      # Avoid accepting an angle-degenerate transform from the first short arc.
+      traj_matching_min_sample_fraction: 0.75
+      # The 10 m, runtime-bounded scan pattern yields 0.15--0.23 m direct
+      # root-match residuals with the passive beacon.  Keep a tight 0.25 m
+      # gate; the controller additionally requires a full root-star graph.
+      ave_match_error_thresh: 0.25
+      # All six Gazebo vehicles are spawned with the same commanded heading.
+      # Negative disables this prior for deployments with unknown headings.
+      max_abs_match_yaw_deg: 5.0
+      pos_num_in_traj: 200
+      reset_tracker_thresh: 5.0
+      valid_cluster_size_thresh: 0.15
+      valid_cluster_dist_thresh: 0.35
+      mutual_observe_noise: 0.01
+      # Teammate observations come from the LiDAR high-intensity clusters.
+      # Residual and attitude gates below reject inconsistent associations
+      # before they can enter the local ESIKF.
+      enable_mutual_observation_update: true
+      mo_gate_residual_norm: 0.50
+      mo_gate_residual_z: 0.25
+      mo_gate_rollpitch_deg: 5.0
+      # RACER freezes the common frame before mapping. Its integration overlay
+      # enables this to stop expensive reflective-target tracking afterwards;
+      # per-UAV FAST-LIO and common-frame publication continue.
+      stop_tracking_after_bootstrap: true
+      frame_num_in_sliding_window: 1
+      actual_uav_num: 4
+      degeneration_thresh: 3.0
+
+  imu_propagate:
+      enable: false
+      topic: "lidar_slam/imu_propagate"
+      filter_acc_en: false
+
+  preprocess:
+      lidar_type: 6
+      feature_extract_en: false
+      scan_line: 6
+      blind: 0.2
+
+  calibration:
+      cut_frame_en: false
+      cut_frame_num: 1
+      accumulate_frame_en: true  # Unused
+      original_frequency: 10 # hz
+      gravity_align_enable: true
+      gravity_align_time: 5.0 # seconds
+      PX4_R_I: [ 0.0, 0.0, 0.0 ] # degree
+      PX4_p_I: [ 0.0, 0.0, 0.0 ] # meter
+      level_horizon: [ 0.0 ,0.0 ,0.0 ] #degree
+
+  mapping:
+      imu_en: true  # Unused
+      acc_cov: 0.01
+      gyr_cov: 0.01
+      b_acc_cov: 0.001
+      b_gyr_cov: 0.001
+      det_range: 10.0
+      # LiDAR origin expressed in the IMU frame. The simulated LiDAR is
+      # mounted 0.095 m above the IMU, so z is positive.
+      LI_extrinsic_T: [ 0.0, 0.0, 0.095 ]
+      LI_extrinsic_R: [ 1.0, 0.0, 0.0,
+                        0.0, 1.0, 0.0,
+                        0.0, 0.0, 1.0]
+      point_filter_num: 3
+      max_iteration: 3
+      filter_size_surf: 0.3
+      filter_size_map: 0.5
+      cube_side_length: 2000.0
+      # Ground-only proprioceptive constraint.  UAV launches leave this false;
+      # the quadruped launch supplies /botN/wheel_odom as a leg-odometry proxy.
+      planar_odom_prior_en: false
+      planar_odom_topic: ""
+      planar_odom_position_gain: 0.50
+      planar_odom_velocity_gain: 0.0
+      planar_odom_yaw_gain: 0.0
+      planar_odom_position_deadband: 0.60
+      planar_odom_max_position_correction: 0.10
+      planar_odom_max_yaw_correction: 0.035
+      planar_odom_max_age: 0.30
+      planar_odom_window_duration: 5.0
+      planar_odom_release_residual: 0.08
+      planar_odom_yaw_consistency_gate: 0.175
+
+  publish:
+      path_en:  false
+      scan_publish_en:  true       # false: close all the point cloud output
+      dense_publish_en: false       # false: low down the points number in a global-frame point clouds scan.
+      scan_bodyframe_pub_en: false  # true: output the point cloud scans in IMU body frame
+      local_map_pub_en: true      # true: publish the local map point cloud
+
+  pcd_save:
+      pcd_save_en: true
+      pcd_resolution: 0.9
+      interval: -1                 # how many LiDAR frames saved in each pcd file;
+                                   # -1 : all frames will be saved in ONE pcd file, may lead to memory crash when having too much frames.

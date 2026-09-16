@@ -1,0 +1,139 @@
+{
+  "complete_at_80_percent": true,
+  "complete_at_95_percent": true,
+  "coverage_checkpoints": [
+    {
+      "new_area_in_interval_m2": 1474.3125,
+      "new_area_rate_m2_per_s": 24.571875,
+      "observed_area_m2": 1474.3125,
+      "observed_fraction": 0.3345767616021786,
+      "time_s": 60.0
+    },
+    {
+      "new_area_in_interval_m2": 243.25,
+      "new_area_rate_m2_per_s": 4.054166666666666,
+      "observed_area_m2": 1717.5625,
+      "observed_fraction": 0.3897793033019403,
+      "time_s": 120.0
+    },
+    {
+      "new_area_in_interval_m2": 777.375,
+      "new_area_rate_m2_per_s": 12.95625,
+      "observed_area_m2": 2494.9375,
+      "observed_fraction": 0.5661948258254851,
+      "time_s": 180.0
+    },
+    {
+      "new_area_in_interval_m2": 452.375,
+      "new_area_rate_m2_per_s": 7.539583333333334,
+      "observed_area_m2": 2947.3125,
+      "observed_fraction": 0.6688556677635311,
+      "time_s": 240.0
+    },
+    {
+      "new_area_in_interval_m2": 509.3125,
+      "new_area_rate_m2_per_s": 8.488541666666666,
+      "observed_area_m2": 3456.625,
+      "observed_fraction": 0.7844377623964598,
+      "time_s": 300.0
+    },
+    {
+      "new_area_in_interval_m2": 2.0625,
+      "new_area_rate_m2_per_s": 0.034375,
+      "observed_area_m2": 3458.6875,
+      "observed_fraction": 0.7849058209463293,
+      "time_s": 360.0
+    },
+    {
+      "new_area_in_interval_m2": 766.8125,
+      "new_area_rate_m2_per_s": 12.780208333333333,
+      "observed_area_m2": 4225.5,
+      "observed_fraction": 0.9589243163508453,
+      "time_s": 420.0
+    },
+    {
+      "new_area_in_interval_m2": 181.0,
+      "new_area_rate_m2_per_s": 3.0166666666666666,
+      "observed_area_m2": 4406.5,
+      "observed_fraction": 1.0,
+      "time_s": 480.0
+    },
+    {
+      "new_area_in_interval_m2": 0.0,
+      "new_area_rate_m2_per_s": 0.0,
+      "observed_area_m2": 4406.5,
+      "observed_fraction": 1.0,
+      "time_s": 540.0
+    },
+    {
+      "new_area_in_interval_m2": 0.0,
+      "new_area_rate_m2_per_s": 0.0,
+      "observed_area_m2": 4406.5,
+      "observed_fraction": 1.0,
+      "time_s": 600.0
+    },
+    {
+      "new_area_in_interval_m2": 0.0,
+      "new_area_rate_m2_per_s": 0.0,
+      "observed_area_m2": 4406.5,
+      "observed_fraction": 1.0,
+      "time_s": 660.0
+    },
+    {
+      "new_area_in_interval_m2": 0.0,
+      "new_area_rate_m2_per_s": 0.0,
+      "observed_area_m2": 4406.5,
+      "observed_fraction": 1.0,
+      "time_s": 699.8975219726562
+    }
+  ],
+  "duration_sim_s": 699.8975219726562,
+  "exploration_efficiency_m2_per_m": 4.930336577163068,
+  "exploration_efficiency_m2_per_s": 6.295921705195227,
+  "grid_resolution_m": 0.25,
+  "inter_robot_collision_samples": 0,
+  "layout": "src/gazebo_sim/worlds/teaching_building_atrium.layout.json",
+  "lidar_range_m": 10.0,
+  "minimum_inter_robot_distance_m": 7.335104905768904,
+  "navigable_area_m2": 4406.5,
+  "observed_fraction": 1.0,
+  "observed_navigable_area_m2": 4406.5,
+  "robot_ids": [
+    1,
+    2
+  ],
+  "robots": {
+    "bot1": {
+      "ate_first_pose_se3_rmse_m": 1.688624462742565,
+      "ate_first_quarter_rmse_m": 0.31832462002338086,
+      "ate_last_quarter_rmse_m": 0.13575017867604758,
+      "ate_max_m": 0.5954251867548522,
+      "ate_root_trajectory_se3_rmse_m": 0.252372322063856,
+      "distance_m": 446.36885276861284,
+      "longest_time_inside_1m_diameter_s": 255.5999755859375,
+      "mean_speed_mps": 0.6394053429904992,
+      "minimum_wall_clearance_m": 0.6336666107177734,
+      "new_observed_area_m2": 1946.0625,
+      "wall_collision_samples": 0
+    },
+    "bot2": {
+      "ate_first_pose_se3_rmse_m": 1.7210225351948318,
+      "ate_first_quarter_rmse_m": 0.7746066869581,
+      "ate_last_quarter_rmse_m": 1.0919098980082382,
+      "ate_max_m": 1.2028347511342845,
+      "ate_root_trajectory_se3_rmse_m": 0.983458199457025,
+      "distance_m": 447.38351708186804,
+      "longest_time_inside_1m_diameter_s": 240.00003051757812,
+      "mean_speed_mps": 0.6396675765344543,
+      "minimum_wall_clearance_m": 0.6368304252624511,
+      "new_observed_area_m2": 2460.4375,
+      "wall_collision_samples": 0
+    }
+  },
+  "run": "artifacts/legged_go2_dual/atrium/run1_700s_v128/run.npz",
+  "time_to_80_percent_s": 365.49749755859375,
+  "time_to_90_percent_s": 400.197509765625,
+  "time_to_95_percent_s": 415.49749755859375,
+  "total_distance_m": 893.7523698504808,
+  "unobserved_navigable_area_m2": 0.0
+}
