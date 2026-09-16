@@ -1,11 +1,7 @@
-# Dual Go2 RACER + Swarm-LIO2 v128
+# Dual Go2 RACER + Swarm-LIO2
 
-This repository is a focused, private reproduction package for the result
-formerly stored as:
-
-```text
-artifacts/legged_go2_dual/atrium/run1_700s_v128
-```
+This repository is a focused, private reproduction package for the archived
+two-Go2 atrium exploration result.
 
 It contains only the source, Docker definitions, runtime configuration,
 recording, analysis and rendering code needed for the two-robot teaching
@@ -28,9 +24,9 @@ simulation seconds. The planar evaluator reported:
 | Inter-robot collision samples | 0 |
 | Emergency stop | false |
 
-Machine-readable reference metrics are under
-`results/reference/run1_700s_v128`. The full NPZ, videos and logs are intended
-to be distributed as a GitHub Release rather than normal Git objects.
+Machine-readable reference metrics are under `results/reference/`. The full
+NPZ, videos and logs are intended to be distributed as a GitHub Release rather
+than normal Git objects.
 
 A clean-clone 200-s acceptance run was completed on 2026-09-16. Its measured
 results and validation boundary are recorded in `VALIDATION.md`.
@@ -44,7 +40,7 @@ Gazebo Fortress + 2 x Go2 + HIMLoco
 Swarm-LIO2 ROS 2 ── common-frame estimation ── racer_adapter
         │ planarized cloud, odometry and state over local TCP gateway
         ▼
-RACER ROS 1 v128 ── HGrid / ACVRP / frontier / trajectory planning
+RACER ROS 1 ── HGrid / ACVRP / frontier / trajectory planning
         │ trajectory commands returned through the gateway
         ▼
 ROS 2 safety/controller ── ground_omni cmd_vel ── two Go2 robots
@@ -59,7 +55,7 @@ The validated execution path uses three pinned container images described in
 `config/provenance.json`:
 
 - historical Go2/Gazebo image with working retro-reflector LiDAR returns;
-- RACER ROS 1 v128 image with per-vehicle first-grid hysteresis;
+- historical RACER ROS 1 image with per-vehicle first-grid hysteresis;
 - a Swarm-LIO2 ROS 2 runtime validated in the 2026-09-16 rerun.
 
 Do not replace these with `latest`. A later locally rebuilt Go2 image produced
@@ -172,10 +168,10 @@ bash scripts/verify_repository.sh
 
 This checks shell syntax, JSON, Compose resolution, host-specific paths, large
 files, nested build trees, critical hashes, reusable integration unit tests and
-the focused v128 release regression tests. The original monolithic
+the focused release regression tests. The original monolithic
 `test_racer_no_progress_guard.py` is retained as historical source but excluded
 from release verification because it also asserts removed wheeled/UAV files and
-post-v128 controller behavior.
+controller behavior added after the archived snapshot.
 
 ## Source-build images
 
@@ -221,10 +217,10 @@ artifacts to Git history:
 bash scripts/prepare_release_assets.sh /path/to/run1_700s_v128
 ```
 
-The generated files appear under `release_assets/run1_700s_v128/`, which is
-ignored by Git. Upload them to a release tagged `run1-700s-v128`; keep the
-repository and packages private unless the redistribution review in
-`LICENSE_SCOPE.md` has been completed.
+The generated files appear under `release_assets/`, which is ignored by Git.
+Upload them to a release tagged `run1-700s`; keep the repository and packages
+private unless the redistribution review in `LICENSE_SCOPE.md` has been
+completed.
 
 ## Reproducibility criteria
 
