@@ -31,7 +31,8 @@ class ReleaseConfigurationTest(unittest.TestCase):
         self.assertIn("--startup-timeout 1800", launcher)
         self.assertIn("auto_trot true", launcher)
         self.assertIn("grep -qi 'successful'", launcher)
-        self.assertIn("trap cleanup_on_exit EXIT", launcher)
+        self.assertIn("trap cleanup_on_exit EXIT INT TERM", launcher)
+        self.assertIn("grep -c 'ikd-tree size'", launcher)
 
     def test_v128_hgrid_has_per_vehicle_first_grid_bonus(self):
         hgrid = (

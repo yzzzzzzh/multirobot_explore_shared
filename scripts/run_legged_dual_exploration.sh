@@ -22,13 +22,14 @@ containers_started=false
 
 cleanup_on_exit() {
   status=$?
-  if [ "$status" -ne 0 ] && [ "$containers_started" = true ]; then
+  trap - EXIT INT TERM
+  if [ "$containers_started" = true ]; then
     "${COMPOSE[@]}" stop --timeout 30 \
       racer_controller racer_ros1 swarm_lio2 gazebo >/dev/null 2>&1 || true
   fi
-  return "$status"
+  exit "$status"
 }
-trap cleanup_on_exit EXIT
+trap cleanup_on_exit EXIT INT TERM
 
 if ! [[ "$DURATION" =~ ^[0-9]+([.][0-9]+)?$ ]] || [ "$DURATION" = "0" ]; then
   echo "duration_sim_s must be a positive number" >&2
@@ -69,7 +70,11 @@ containers_started=true
 
 echo "waiting for Swarm-LIO2 map initialization"
 deadline=$((SECONDS + 600))
-until docker logs --since 20s swarm_lio2_ros2 2>&1 | grep -q 'ikd-tree size'; do
+while true; do
+  ikd_count="$(docker logs --since 30s swarm_lio2_ros2 2>&1 | grep -c 'ikd-tree size' || true)"
+  if [ "$ikd_count" -gt 0 ]; then
+    break
+  fi
   if (( SECONDS >= deadline )); then
     echo "timed out waiting for Swarm-LIO2 map initialization" >&2
     exit 4
