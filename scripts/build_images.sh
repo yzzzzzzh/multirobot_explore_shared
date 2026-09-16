@@ -13,11 +13,11 @@ for name in HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy; do
   fi
 done
 
-docker build "${proxy_args[@]}" \
+docker build "${proxy_args[@]}" --network=host \
   -t fishbot_base:run1-v128-source \
   -f docker/Dockerfile .
 
-docker build "${proxy_args[@]}" \
+docker build "${proxy_args[@]}" --network=host \
   --build-arg BASE_IMAGE=fishbot_base:run1-v128-source \
   -t fishbot_multirobot_sim-gazebo:run1-v128-source \
   -f docker/Dockerfile.gazebo .
@@ -27,11 +27,11 @@ docker build "${proxy_args[@]}" --network=host \
   -t fishbot_multirobot_sim-legged:run1-v128-source \
   -f docker/Dockerfile.legged .
 
-docker build "${proxy_args[@]}" \
+docker build "${proxy_args[@]}" --network=host \
   -t fishbot_multirobot_sim-racer_ros1:run1-v128-source \
   -f src/racer_integration/Dockerfile.ros1 .
 
-docker build "${proxy_args[@]}" \
+docker build "${proxy_args[@]}" --network=host \
   -t swarm-lio2-ros2:run1-v128-source \
   -f src/Swarm-LIO2-ROS2-Docker/docker/Dockerfile.ros2 \
   src/Swarm-LIO2-ROS2-Docker

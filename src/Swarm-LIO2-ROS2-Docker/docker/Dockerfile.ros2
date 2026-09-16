@@ -45,9 +45,12 @@ RUN pip3 install -U colcon-common-extensions matplotlib
 # Finally cleanup
 RUN rm -rf /var/lib/apt/lists/*
 
-# ---- GTSAM (from official repo) ----
+# ---- GTSAM 4.2 (official GitHub release archive, retried for proxy links) ----
 WORKDIR /tmp/gtsam
-RUN git clone --branch 4.2 https://github.com/borglab/gtsam.git gtsam && \
+RUN curl -fL --retry 5 --retry-all-errors --connect-timeout 30 \
+      https://github.com/borglab/gtsam/archive/refs/tags/4.2.tar.gz \
+      -o gtsam.tar.gz && \
+    tar -xzf gtsam.tar.gz && mv gtsam-4.2 gtsam && \
     mkdir -p gtsam/build && cd gtsam/build && \
     cmake .. \
       -DCMAKE_BUILD_TYPE=Release \

@@ -30,7 +30,9 @@ RUN apt-get update \
         python3-numpy \
         unzip
 # libtorch (CPU, cxx11 ABI) for the RL locomotion controller
-RUN cd /opt && wget -q https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.5.0%2Bcpu.zip -O libtorch.zip \
+RUN cd /opt && wget -q --tries=5 --timeout=30 --continue \
+        https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.5.0%2Bcpu.zip \
+        -O libtorch.zip \
     && unzip -q libtorch.zip && rm libtorch.zip
 ENV Torch_DIR=/opt/libtorch
 ENV LD_LIBRARY_PATH=/opt/libtorch/lib:${LD_LIBRARY_PATH}

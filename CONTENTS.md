@@ -8,6 +8,8 @@
 - `scripts/monitor_dual_run.sh`: periodic progress snapshots.
 - `scripts/postprocess_dual_legged_run.sh`: collection and metric calculation.
 - `scripts/finish_dual_run.sh`: rendering and output integrity checks.
+- `scripts/prepare_release_assets.sh`: packages the archived 700-s videos,
+  result data and logs for a GitHub Release without adding them to Git history.
 - `src/RACER`: modified v128 working tree extracted from the RACER image.
 - `src/Swarm-LIO2-ROS2-Docker`: ROS 2 LIO source used by the validated rerun.
 - `src/racer_adapter`: ROS 2 planar adapter.

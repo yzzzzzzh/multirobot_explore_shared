@@ -32,6 +32,9 @@ Machine-readable reference metrics are under
 `results/reference/run1_700s_v128`. The full NPZ, videos and logs are intended
 to be distributed as a GitHub Release rather than normal Git objects.
 
+A clean-clone 200-s acceptance run was completed on 2026-09-16. Its measured
+results and validation boundary are recorded in `VALIDATION.md`.
+
 ## Runtime architecture
 
 ```text
@@ -193,7 +196,9 @@ bash scripts/build_images.sh
 ```
 
 Do not use `127.0.0.1` for a host proxy unless the build uses host networking
-or the proxy is genuinely reachable from the builder.
+or the proxy is genuinely reachable from the builder. `build_images.sh` uses
+host networking on Linux so a host-bound proxy can be reached during every
+build stage.
 
 ## Publishing the validated images
 
@@ -208,6 +213,18 @@ bash scripts/push_images_to_ghcr.sh yzzzzzzh
 After pushing, replace tag-only entries in `.env.example` with immutable
 `ghcr.io/...@sha256:...` references and link each package to this repository so
 private collaborators inherit access.
+
+Prepare the archived 700-s result for the GitHub Release without adding large
+artifacts to Git history:
+
+```bash
+bash scripts/prepare_release_assets.sh /path/to/run1_700s_v128
+```
+
+The generated files appear under `release_assets/run1_700s_v128/`, which is
+ignored by Git. Upload them to a release tagged `run1-700s-v128`; keep the
+repository and packages private unless the redistribution review in
+`LICENSE_SCOPE.md` has been completed.
 
 ## Reproducibility criteria
 
